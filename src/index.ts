@@ -93,18 +93,27 @@ export default class CloudflareR2Adapter extends StorageBase {
           Bucket: this.bucket,
           Key: stripLeadingSlash(path.join(targetPath, fileName)),
         })
-      ).then(
-        value => {
-          if (value.$metadata.httpStatusCode === 200) {
-            resolve(true);
-          } else {
-            resolve(false);
+      )
+        .then(
+          value => {
+            if (value.$metadata.httpStatusCode === 200) {
+              resolve(true);
+            } else {
+              resolve(false);
+            }
+          },
+          reason => {
+            if (reason.$metadata.httpStatusCode === 404) {
+              resolve(false);
+            } else {
+              reject(reason);
+            }
           }
-        },
-        reason => {
+        )
+        .catch(reason => {
+          log.debug(reason);
           reject(reason);
-        }
-      );
+        });
     });
   }
 
@@ -177,7 +186,10 @@ export default class CloudflareR2Adapter extends StorageBase {
             }
           );
         })
-        .catch(err => reject(err));
+        .catch(err => {
+          log.debug(err);
+          reject(err);
+        });
     });
   }
 
