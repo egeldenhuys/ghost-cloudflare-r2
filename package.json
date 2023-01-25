@@ -1,0 +1,22 @@
+{
+  "devDependencies": {
+    "@types/express-serve-static-core": "^4.17.33",
+    "@types/ghost-storage-base": "^0.0.1",
+    "@types/node": "^14.11.2",
+    "gts": "^3.1.1",
+    "typescript": "~4.7.0"
+  },
+  "scripts": {
+    "lint": "gts lint",
+    "clean": "gts clean",
+    "compile": "tsc",
+    "fix": "gts fix",
+    "prepare": "npm run compile",
+    "pretest": "npm run compile",
+    "posttest": "npm run lint"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.257.0",
+    "ghost-storage-base": "^1.0.0"
+  }
+}
