@@ -3,8 +3,6 @@ import {Handler} from 'express-serve-static-core';
 
 import {
   S3Client,
-  ListBucketsCommand,
-  ListObjectsV2Command,
   GetObjectCommand,
   PutObjectCommand,
   HeadObjectCommand,
@@ -32,13 +30,14 @@ function readFileAsync(filePath: string): Promise<Buffer> {
   );
 }
 
-class CloudflareR2Adapter extends StorageBase {
+export default class CloudflareR2Adapter extends StorageBase {
   S3: S3Client;
   private bucket: string;
   private pathPrefix: string;
   private domain: string;
 
-  constructor() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  constructor(config = {}) {
     super();
 
     check_env_variable('GHOST_STORAGE_ADAPTER_R2_DOMAIN');
@@ -174,3 +173,5 @@ class CloudflareR2Adapter extends StorageBase {
     };
   }
 }
+
+module.exports = CloudflareR2Adapter;
