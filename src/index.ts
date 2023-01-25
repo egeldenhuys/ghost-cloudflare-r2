@@ -179,7 +179,7 @@ export default class CloudflareR2Adapter extends StorageBase {
             })
           ).then(
             () => {
-              resolve(`${this.domain}/${fileName}`);
+              resolve(`${this.domain}/${stripLeadingSlash(fileName)}`);
             },
             reason => {
               reject(reason);
