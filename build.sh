@@ -10,7 +10,8 @@ set -x
 cd $SCRIPT_DIR
 
 rm -f index.js index.d.ts
-npm install
+npm_config_cache='/npm_cache' npm install
+
 cp ./build/index.js .
 cp ./build/index.d.ts .
 
