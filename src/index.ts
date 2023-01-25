@@ -1,5 +1,10 @@
 import StorageBase = require('ghost-storage-base');
 import {Handler} from 'express-serve-static-core';
+// eslint-disable-next-line node/no-unpublished-import
+import {getLogger, setLevel} from 'loglevel';
+
+setLevel('debug');
+const log = getLogger('ghost-cloudflare-r2');
 
 import {
   S3Client,
@@ -38,6 +43,7 @@ export default class CloudflareR2Adapter extends StorageBase {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   constructor(config = {}) {
+    log.debug('Initialising ghost-cloudflare-r2 storage adapter');
     super();
 
     check_env_variable('GHOST_STORAGE_ADAPTER_R2_DOMAIN');
@@ -60,13 +66,19 @@ export default class CloudflareR2Adapter extends StorageBase {
           process.env.GHOST_STORAGE_ADAPTER_R2_SECRET_ACCESS_KEY || '',
       },
     });
+
+    log.debug('Initialisation done');
   }
 
   delete(fileName: string, targetDir?: string): Promise<boolean> {
+    log.debug('delete():', 'filename:', fileName, 'targetDir:', targetDir);
+
     return Promise.resolve(false);
   }
 
   exists(fileName: string, targetDir?: string): Promise<boolean> {
+    log.debug('exists(): ', 'fileName: ', fileName, 'targetDir: ', targetDir);
+
     let targetPath: string;
 
     if (targetDir === undefined) {
@@ -97,6 +109,8 @@ export default class CloudflareR2Adapter extends StorageBase {
   }
 
   read(options?: StorageBase.ReadOptions): Promise<Buffer> {
+    log.debug('read(): ', 'options: ', options);
+
     return new Promise((resolve, reject) => {
       if (options === undefined) {
         reject(
@@ -136,6 +150,8 @@ export default class CloudflareR2Adapter extends StorageBase {
   }
 
   save(image: StorageBase.Image, targetDir?: string): Promise<string> {
+    log.debug('save(): ', 'image: ', image, 'targetDir: ', targetDir);
+
     const directory = targetDir || this.getTargetDir(this.pathPrefix);
 
     return new Promise((resolve, reject) => {
@@ -166,6 +182,7 @@ export default class CloudflareR2Adapter extends StorageBase {
   }
 
   serve(): Handler {
+    log.debug('serve()');
     console.warn('Cloudflare R2 Storage Adapter: serve() has been called');
 
     return (req, res, next) => {
