@@ -194,13 +194,7 @@ export default class CloudflareR2Adapter extends StorageBase {
   }
 
   saveRaw(buffer: Buffer, targetPath: string): Promise<string> {
-    log.debug('saveRaw(): ', 'buffer: ', 'targetPath: ', targetPath);
-
-    const directory = targetPath || this.getTargetDir(this.pathPrefix);
-
-    return new Promise((resolve, reject) => {
-      resolve(`${this.domain}/dummy.jpg`);
-    });
+    throw new Error('ghost-cloudflare-r2.saveRaw(): Not Implemented!');
   }
 
   serve(): Handler {
