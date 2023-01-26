@@ -174,6 +174,13 @@ export default class CloudflareR2Adapter extends StorageBase {
     });
   }
 
+  /**
+   * Ghost checks if a 'saveRaw' function exists on the storage adapter,
+   * if it exists, the theme will generate srcset attribute in the HTML.
+   * @param buffer
+   * @param targetPath
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   saveRaw(buffer: Buffer, targetPath: string): Promise<string> {
     throw new Error('ghost-cloudflare-r2.saveRaw(): Not Implemented!');
   }
