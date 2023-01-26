@@ -1,10 +1,10 @@
 import StorageBase = require('ghost-storage-base');
 import {Handler} from 'express-serve-static-core';
 // eslint-disable-next-line node/no-unpublished-import
-import {getLogger, setLevel} from 'loglevel';
+import {getLogger, Logger} from 'loglevel';
 
-setLevel('debug');
 const log = getLogger('ghost-cloudflare-r2');
+setLogLevel(log, 'GHOST_STORAGE_ADAPTER_R2_LOG_LEVEL');
 
 import {
   S3Client,
@@ -33,6 +33,28 @@ function readFileAsync(filePath: string): Promise<Buffer> {
   return new Promise((resolve, reject) =>
     readFile(filePath, (err, data) => (err ? reject(err) : resolve(data)))
   );
+}
+
+function setLogLevel(logger: Logger, envVariable: string) {
+  switch (process.env[envVariable] || '') {
+    case 'trace':
+      logger.setLevel('trace');
+      break;
+    case 'debug':
+      logger.setLevel('debug');
+      break;
+    case 'info':
+      logger.setLevel('info');
+      break;
+    case 'warn':
+      logger.setLevel('warn');
+      break;
+    case 'error':
+      logger.setLevel('error');
+      break;
+    default:
+      logger.setLevel('info');
+  }
 }
 
 export default class CloudflareR2Adapter extends StorageBase {
