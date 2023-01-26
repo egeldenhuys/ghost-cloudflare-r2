@@ -131,7 +131,7 @@ export default class CloudflareR2Adapter extends StorageBase {
   }
 
   exists(fileName: string, targetDir?: string): Promise<boolean> {
-    log.debug('exists(): ', 'fileName: ', fileName, 'targetDir: ', targetDir);
+    log.debug('exists():', 'fileName:', fileName, 'targetDir:', targetDir);
 
     let targetPath: string;
 
@@ -172,7 +172,7 @@ export default class CloudflareR2Adapter extends StorageBase {
   }
 
   read(options?: StorageBase.ReadOptions): Promise<Buffer> {
-    log.debug('Cloudflare R2 Storage Adapter: read(): ', 'options: ', options);
+    log.debug('Cloudflare R2 Storage Adapter: read():', 'options:', options);
 
     return new Promise((resolve, reject) => {
       if (options === undefined) {
@@ -195,10 +195,10 @@ export default class CloudflareR2Adapter extends StorageBase {
 
   save(fileInfo: StorageBase.Image, targetDir?: string): Promise<string> {
     log.debug(
-      'Cloudflare R2 Storage Adapter: save(): ',
-      'fileInfo: ',
+      'Cloudflare R2 Storage Adapter: save():',
+      'fileInfo:',
       fileInfo,
-      'targetDir: ',
+      'targetDir:',
       targetDir
     );
 
@@ -211,7 +211,7 @@ export default class CloudflareR2Adapter extends StorageBase {
       ])
         .then(([filePathR2, fileBuffer]) => {
           log.debug(
-            'Cloudflare R2 Storage Adapter: save(): saving ',
+            'Cloudflare R2 Storage Adapter: save(): saving',
             filePathR2
           );
           this.S3.send(
