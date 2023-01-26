@@ -140,7 +140,13 @@ export default class CloudflareR2Adapter extends StorageBase {
   }
 
   save(image: StorageBase.Image, targetDir?: string): Promise<string> {
-    log.debug('save(): ', 'image: ', image, 'targetDir: ', targetDir);
+    log.debug(
+      'Cloudflare R2 Storage Adapter: save(): ',
+      'image: ',
+      image,
+      'targetDir: ',
+      targetDir
+    );
 
     const directory = targetDir || this.getTargetDir(this.pathPrefix);
 
@@ -150,6 +156,7 @@ export default class CloudflareR2Adapter extends StorageBase {
         readFileAsync(image.path),
       ])
         .then(([filePath, fileBuffer]) => {
+          log.debug('Cloudflare R2 Storage Adapter: save(): saving ', filePath);
           this.S3.send(
             new PutObjectCommand({
               Bucket: this.bucket,
