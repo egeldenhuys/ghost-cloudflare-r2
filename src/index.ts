@@ -138,8 +138,11 @@ export default class CloudflareR2Adapter extends StorageBase {
 
       // check if path is stored in s3 handled by us
       if (!filePath.startsWith(this.domain)) {
-        reject(new Error(`${path} is not stored in s3`));
+        reject(new Error(`${filePath} is not stored in Cloudflare R2`));
       }
+
+      log.debug(`Making request to R2 for ${filePath}`);
+
       filePath = filePath.substring(this.domain.length);
 
       this.S3.send(
