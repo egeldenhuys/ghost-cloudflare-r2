@@ -152,7 +152,7 @@ export default class CloudflareR2Adapter extends StorageBase {
       this.S3.send(
         new HeadObjectCommand({
           Bucket: this.bucket,
-          Key: stripLeadingSlash(path.join(targetPath, fileName)),
+          Key: stripLeadingSlash(targetPath),
         })
       )
         .then(
