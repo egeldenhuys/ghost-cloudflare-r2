@@ -18,6 +18,10 @@ function stripLeadingSlash(s: string): string {
   return s.indexOf('/') === 0 ? s.substring(1) : s;
 }
 
+function stripEndingSlash(s: string): string {
+  return s.indexOf('/') === s.length - 1 ? s.substring(0, s.length - 1) : s;
+}
+
 function check_env_variable(variableName: string) {
   if (process.env[variableName] === undefined) {
     throw new Error(`Environment variable ${variableName} is not defined`);
@@ -200,6 +204,54 @@ export default class CloudflareR2Adapter extends StorageBase {
     });
   }
 
+  saveResizedImages(
+    fileInfo: StorageBase.Image,
+    fileBuffer: Buffer
+  ): Promise<boolean> {
+    log.debug(
+      'Cloudflare R2 Storage Adapter: saveResizedImages(): fileInfo:',
+      fileInfo
+    );
+    const widths = [600, 1000, 1600, 2400];
+
+    return new Promise((resolve, reject) => {
+      Promise.all(
+        widths.map(width => {
+          const directory = this.getTargetDir(
+            `${stripEndingSlash(this.pathPrefix)}/size/w${width}`
+          );
+
+          Promise.all([this.getUniqueFileName(fileInfo, directory)])
+            .then(([filePathR2]) => {
+              log.debug(
+                'Cloudflare R2 Storage Adapter: saveResizedImages(): saving',
+                filePathR2
+              );
+
+              return this.S3.send(
+                new PutObjectCommand({
+                  Bucket: this.bucket,
+                  Body: fileBuffer,
+                  ContentType: fileInfo.type,
+                  CacheControl: `max-age=${30 * 24 * 60 * 60}`,
+                  Key: stripLeadingSlash(filePathR2),
+                })
+              );
+            })
+            .catch(reason => {
+              reject(reason);
+            });
+        })
+      )
+        .then(() => {
+          resolve(true);
+        })
+        .catch(reason => {
+          reject(reason);
+        });
+    });
+  }
+
   save(fileInfo: StorageBase.Image, targetDir?: string): Promise<string> {
     log.debug(
       'Cloudflare R2 Storage Adapter: save():',
@@ -231,7 +283,19 @@ export default class CloudflareR2Adapter extends StorageBase {
             })
           ).then(
             () => {
-              resolve(`${this.domain}/${stripLeadingSlash(filePathR2)}`);
+              if (fileInfo.path.endsWith('_processed')) {
+                log.info('Generating different image sizes...');
+                this.saveResizedImages(fileInfo, fileBuffer)
+                  .then(() => {
+                    log.info('Generating different image sizes... Done');
+                    resolve(`${this.domain}/${stripLeadingSlash(filePathR2)}`);
+                  })
+                  .catch(reason => {
+                    reject(reason);
+                  });
+              } else {
+                resolve(`${this.domain}/${stripLeadingSlash(filePathR2)}`);
+              }
             },
             reason => {
               reject(reason);
