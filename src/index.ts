@@ -118,7 +118,7 @@ export default class CloudflareR2Adapter extends StorageBase {
   }
 
   read(options?: StorageBase.ReadOptions): Promise<Buffer> {
-    log.debug('read(): ', 'options: ', options);
+    log.debug('Cloudflare R2 Storage Adapter: read(): ', 'options: ', options);
 
     return new Promise((resolve, reject) => {
       if (options === undefined) {
@@ -133,30 +133,8 @@ export default class CloudflareR2Adapter extends StorageBase {
         );
       }
 
-      // remove trailing slashes
-      let filePath = (options?.path || '').replace(/\/$|\\$/, '');
-
-      // check if path is stored in s3 handled by us
-      if (!filePath.startsWith(this.domain)) {
-        reject(new Error(`${filePath} is not stored in Cloudflare R2`));
-      }
-
-      log.debug(`Making request to R2 for ${filePath}`);
-
-      filePath = filePath.substring(this.domain.length);
-
-      this.S3.send(
-        new GetObjectCommand({
-          Bucket: this.bucket,
-          Key: stripLeadingSlash(filePath),
-        })
-      ).then(
-        value => {
-          resolve(value.Body);
-        },
-        reason => {
-          reject(reason);
-        }
+      reject(
+        'Cloudflare R2 Storage Adapter: read() is not supported. Images should be fetched from CDN URL. Use redirects instead.'
       );
     });
   }
