@@ -89,7 +89,7 @@ export default class CloudflareR2Adapter extends StorageBase {
 
   delete(fileName: string, targetDir?: string): Promise<boolean> {
     log.debug('delete():', 'filename:', fileName, 'targetDir:', targetDir);
-
+    log.error('Cloudflare R2 Storage Adapter: delete() is not implemented');
     return Promise.resolve(false);
   }
 
@@ -210,9 +210,6 @@ export default class CloudflareR2Adapter extends StorageBase {
   }
 
   serve(): Handler {
-    log.debug('serve()');
-    console.warn('Cloudflare R2 Storage Adapter: serve() has been called');
-
     return (req, res, next) => {
       next();
     };
