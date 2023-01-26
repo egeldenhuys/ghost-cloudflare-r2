@@ -113,7 +113,7 @@ export default class CloudflareR2Adapter extends StorageBase {
 
     log.info(
       'Cloudflare R2 Storage Adapter: handling',
-      this.storageType,
+      StorageType[this.storageType],
       'at',
       this.pathPrefix
     );
