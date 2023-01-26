@@ -32,17 +32,19 @@ Requires Docker to be installed. This has the advantage of not requiring you to 
 ## Configuration
 The storage adapter makes use of the following environment variables:
 
-| Environment Variable                         | Description                                                                                       |
-| -------------------------------------------- |---------------------------------------------------------------------------------------------------|
-| `GHOST_STORAGE_ADAPTER_R2_ACCOUNT_ID`        | Cloudflare R2 Account ID                                                                          |
-| `GHOST_STORAGE_ADAPTER_R2_ACCESS_KEY_ID`     | Access Key ID from Cloudflare R2 API Token                                                        |
-| `GHOST_STORAGE_ADAPTER_R2_SECRET_ACCESS_KEY` | Secret Access Key from Cloudflare R2 API Token                                                    |
-| `GHOST_STORAGE_ADAPTER_R2_BUCKET`            | R2 Bucket to use for storage                                                                      |
-| `GHOST_STORAGE_ADAPTER_R2_DOMAIN`            | R2 Custom domain to use for serving content                                                       |
-| `GHOST_STORAGE_ADAPTER_R2_IMAGES_URL_PREFIX` | URL prefix to use for storing and serving images from R2. Default `/content/images/`              |
-| `GHOST_STORAGE_ADAPTER_R2_MEDIA_URL_PREFIX`  | URL prefix to use for storing and serving media (video) from R2. Default `/content/media/`        |
-| `GHOST_STORAGE_ADAPTER_R2_FILES_URL_PREFIX`  | URL prefix to use for storing and serving files from R2. Default `/content/files/`                |
-| `GHOST_STORAGE_ADAPTER_R2_LOG_LEVEL`         | Log level for the storage adapter. Default `info`. Allowed values `debug`, `info`, `warn`, `error`|
+| Environment Variable                         | Description                                                                                        |
+|----------------------------------------------|----------------------------------------------------------------------------------------------------|
+| `GHOST_STORAGE_ADAPTER_R2_ACCOUNT_ID`        | Cloudflare R2 Account ID                                                                           |
+| `GHOST_STORAGE_ADAPTER_R2_ACCESS_KEY_ID`     | Access Key ID from Cloudflare R2 API Token                                                         |
+| `GHOST_STORAGE_ADAPTER_R2_SECRET_ACCESS_KEY` | Secret Access Key from Cloudflare R2 API Token                                                     |
+| `GHOST_STORAGE_ADAPTER_R2_BUCKET`            | R2 Bucket to use for storage                                                                       |
+| `GHOST_STORAGE_ADAPTER_R2_DOMAIN`            | R2 Custom domain to use for serving content                                                        |
+| `GHOST_STORAGE_ADAPTER_R2_IMAGES_URL_PREFIX` | URL prefix to use for storing and serving images from R2. Default `/content/images/`               |
+| `GHOST_STORAGE_ADAPTER_R2_MEDIA_URL_PREFIX`  | URL prefix to use for storing and serving media (video) from R2. Default `/content/media/`         |
+| `GHOST_STORAGE_ADAPTER_R2_FILES_URL_PREFIX`  | URL prefix to use for storing and serving files from R2. Default `/content/files/`                 |
+| `GHOST_STORAGE_ADAPTER_R2_RESPONSIVE_IMAGES` | Generate an image for each width specified. Default `false`. Allowed values `true`, `false`        |
+| `GHOST_STORAGE_ADAPTER_R2_RESIZE_WIDTHS`     | Comma separated list of widths to resize the image when saving. Default `600,1000,1600,2400`       |
+| `GHOST_STORAGE_ADAPTER_R2_LOG_LEVEL`         | Log level for the storage adapter. Default `info`. Allowed values `debug`, `info`, `warn`, `error` |
 
 The following Ghost configuration is required to activate the plugin for `images`, `media`, and `files`:
 ```json
@@ -101,8 +103,7 @@ environment:
 
 ## TODO
 - [ ] Add option to use UUID for storing file names for privacy
-- [ ] Add option to enable `srcset` (hack) to be generated in the HTML
-- [ ] Generate and store different image sizes for srcset
 - [ ] Read adapter configuration from Ghost config as well as environment variables
 - [ ] Tag a version for deployment
 - [ ] Publish npm package
+- [ ] Tests

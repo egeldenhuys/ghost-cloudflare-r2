@@ -78,6 +78,9 @@ export default class CloudflareR2Adapter extends StorageBase {
   private imagesUrlPrefix: string;
   private mediaUrlPrefix: string;
   private filesUrlPrefix: string;
+  private responsiveImages: string;
+  private resizeWidths: number[];
+  public saveRaw: unknown = undefined;
 
   constructor(config: Config = {}) {
     log.debug('Initialising ghost-cloudflare-r2 storage adapter');
@@ -101,6 +104,19 @@ export default class CloudflareR2Adapter extends StorageBase {
     this.filesUrlPrefix =
       process.env.GHOST_STORAGE_ADAPTER_R2_FILES_URL_PREFIX ||
       '/content/files/';
+    this.responsiveImages =
+      process.env.GHOST_STORAGE_ADAPTER_R2_RESPONSIVE_IMAGES || 'false';
+    this.resizeWidths = (
+      process.env.GHOST_STORAGE_ADAPTER_R2_RESIZE_WIDTHS || '600,1000,1600,2400'
+    )
+      .split(',')
+      .map(w => parseInt(w));
+
+    if (this.responsiveImages === 'true') {
+      // Ghost checks if a 'saveRaw' function exists on the storage adapter,
+      // if it exists, the theme will generate srcset attribute in the HTML.
+      this.saveRaw = function () {};
+    }
 
     if (config.storage_type_images === true) {
       this.storageType = StorageType.Images;
@@ -213,11 +229,10 @@ export default class CloudflareR2Adapter extends StorageBase {
       'Cloudflare R2 Storage Adapter: saveResizedImages(): fileInfo:',
       fileInfo
     );
-    const widths = [600, 1000, 1600, 2400];
 
     return new Promise((resolve, reject) => {
       Promise.all(
-        widths.map(width => {
+        this.resizeWidths.map(width => {
           const directory = this.getTargetDir(
             `${stripEndingSlash(this.pathPrefix)}/size/w${width}`
           );
@@ -287,7 +302,10 @@ export default class CloudflareR2Adapter extends StorageBase {
             })
           ).then(
             () => {
-              if (fileInfo.path.endsWith('_processed')) {
+              if (
+                fileInfo.path.endsWith('_processed') &&
+                this.responsiveImages === 'true'
+              ) {
                 log.info('Generating different image sizes...');
                 this.saveResizedImages(fileInfo, fileBuffer)
                   .then(() => {
@@ -311,17 +329,6 @@ export default class CloudflareR2Adapter extends StorageBase {
           reject(err);
         });
     });
-  }
-
-  /**
-   * Ghost checks if a 'saveRaw' function exists on the storage adapter,
-   * if it exists, the theme will generate srcset attribute in the HTML.
-   * @param buffer
-   * @param targetPath
-   */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  saveRaw(buffer: Buffer, targetPath: string): Promise<string> {
-    throw new Error('ghost-cloudflare-r2.saveRaw(): Not Implemented!');
   }
 
   serve(): Handler {
