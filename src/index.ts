@@ -149,18 +149,18 @@ export default class CloudflareR2Adapter extends StorageBase {
         this.getUniqueFileName(image, directory),
         readFileAsync(image.path),
       ])
-        .then(([fileName, file]) => {
+        .then(([filePath, fileBuffer]) => {
           this.S3.send(
             new PutObjectCommand({
               Bucket: this.bucket,
-              Body: file,
+              Body: fileBuffer,
               ContentType: image.type,
               CacheControl: `max-age=${30 * 24 * 60 * 60}`,
-              Key: stripLeadingSlash(fileName),
+              Key: stripLeadingSlash(filePath),
             })
           ).then(
             () => {
-              resolve(`${this.domain}/${stripLeadingSlash(fileName)}`);
+              resolve(`${this.domain}/${stripLeadingSlash(filePath)}`);
             },
             reason => {
               reject(reason);
