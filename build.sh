@@ -10,7 +10,9 @@ set -x
 cd $SCRIPT_DIR
 rm -fr build/
 rm -f index.js index.d.ts index.js.map
-npm_config_cache='/npm_cache' npm install
+
+npm_config_cache=${SCRIPT_DIR}/npm_cache npm install
+rm -fr ${SCRIPT_DIR}/npm_cache
 
 cp ./build/src/index.js .
 cp ./build/src/index.js.map .
