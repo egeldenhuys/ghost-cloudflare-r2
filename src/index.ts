@@ -111,6 +111,13 @@ export default class CloudflareR2Adapter extends StorageBase {
       this.pathPrefix = this.imagesUrlPrefix;
     }
 
+    log.info(
+      'Cloudflare R2 Storage Adapter: handling',
+      this.storageType,
+      'at',
+      this.pathPrefix
+    );
+
     this.S3 = new S3Client({
       region: 'auto',
       endpoint: `https://${process.env.GHOST_STORAGE_ADAPTER_R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
