@@ -2,6 +2,7 @@ import StorageBase = require('ghost-storage-base');
 import {Handler} from 'express-serve-static-core';
 // eslint-disable-next-line node/no-unpublished-import
 import {getLogger, Logger} from 'loglevel';
+import sharp from 'sharp';
 
 const log = getLogger('ghost-cloudflare-r2');
 setLogLevel(log, 'GHOST_STORAGE_ADAPTER_R2_LOG_LEVEL');
@@ -221,8 +222,11 @@ export default class CloudflareR2Adapter extends StorageBase {
             `${stripEndingSlash(this.pathPrefix)}/size/w${width}`
           );
 
-          Promise.all([this.getUniqueFileName(fileInfo, directory)])
-            .then(([filePathR2]) => {
+          Promise.all([
+            this.getUniqueFileName(fileInfo, directory),
+            sharp(fileBuffer).resize({width: width}).toBuffer(),
+          ])
+            .then(([filePathR2, resizedBuffer]) => {
               log.debug(
                 'Cloudflare R2 Storage Adapter: saveResizedImages(): saving',
                 filePathR2
@@ -231,7 +235,7 @@ export default class CloudflareR2Adapter extends StorageBase {
               return this.S3.send(
                 new PutObjectCommand({
                   Bucket: this.bucket,
-                  Body: fileBuffer,
+                  Body: resizedBuffer,
                   ContentType: fileInfo.type,
                   CacheControl: `max-age=${30 * 24 * 60 * 60}`,
                   Key: stripLeadingSlash(filePathR2),
