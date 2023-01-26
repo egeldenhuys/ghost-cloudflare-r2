@@ -8,7 +8,6 @@ setLogLevel(log, 'GHOST_STORAGE_ADAPTER_R2_LOG_LEVEL');
 
 import {
   S3Client,
-  GetObjectCommand,
   PutObjectCommand,
   HeadObjectCommand,
 } from '@aws-sdk/client-s3';
@@ -17,10 +16,6 @@ import {readFile} from 'fs';
 
 function stripLeadingSlash(s: string): string {
   return s.indexOf('/') === 0 ? s.substring(1) : s;
-}
-
-function stripEndingSlash(s: string): string {
-  return s.indexOf('/') === s.length - 1 ? s.substring(0, s.length - 1) : s;
 }
 
 function check_env_variable(variableName: string) {
