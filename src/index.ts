@@ -52,14 +52,29 @@ function setLogLevel(logger: Logger, envVariable: string) {
   }
 }
 
+enum StorageType {
+  Images = 0,
+  Media = 1,
+  Files = 2,
+}
+
+interface Config {
+  storage_type_images?: boolean;
+  storage_type_media?: boolean;
+  storage_type_files?: boolean;
+}
+
 export default class CloudflareR2Adapter extends StorageBase {
   S3: S3Client;
   private bucket: string;
   private pathPrefix: string;
   private domain: string;
+  private storageType: StorageType = StorageType.Images;
+  private imagesUrlPrefix: string;
+  private mediaUrlPrefix: string;
+  private filesUrlPrefix: string;
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  constructor(config = {}) {
+  constructor(config: Config = {}) {
     log.debug('Initialising ghost-cloudflare-r2 storage adapter');
     super();
 
@@ -68,11 +83,33 @@ export default class CloudflareR2Adapter extends StorageBase {
     check_env_variable('GHOST_STORAGE_ADAPTER_R2_ACCOUNT_ID');
     check_env_variable('GHOST_STORAGE_ADAPTER_R2_ACCESS_KEY_ID');
     check_env_variable('GHOST_STORAGE_ADAPTER_R2_SECRET_ACCESS_KEY');
-    check_env_variable('GHOST_STORAGE_ADAPTER_R2_PATH_PREFIX');
 
     this.bucket = process.env.GHOST_STORAGE_ADAPTER_R2_BUCKET || '';
     this.pathPrefix = process.env.GHOST_STORAGE_ADAPTER_R2_PATH_PREFIX || '';
     this.domain = process.env.GHOST_STORAGE_ADAPTER_R2_DOMAIN || '';
+    this.imagesUrlPrefix =
+      process.env.GHOST_STORAGE_ADAPTER_R2_IMAGES_URL_PREFIX ||
+      '/content/images/';
+    this.mediaUrlPrefix =
+      process.env.GHOST_STORAGE_ADAPTER_R2_MEDIA_URL_PREFIX ||
+      '/content/media/';
+    this.filesUrlPrefix =
+      process.env.GHOST_STORAGE_ADAPTER_R2_FILES_URL_PREFIX ||
+      '/content/files/';
+
+    if (config.storage_type_images === true) {
+      this.storageType = StorageType.Images;
+      this.pathPrefix = this.imagesUrlPrefix;
+    } else if (config.storage_type_media === true) {
+      this.storageType = StorageType.Media;
+      this.pathPrefix = this.mediaUrlPrefix;
+    } else if (config.storage_type_files === true) {
+      this.storageType = StorageType.Files;
+      this.pathPrefix = this.filesUrlPrefix;
+    } else {
+      this.storageType = StorageType.Images;
+      this.pathPrefix = this.imagesUrlPrefix;
+    }
 
     this.S3 = new S3Client({
       region: 'auto',
@@ -151,16 +188,16 @@ export default class CloudflareR2Adapter extends StorageBase {
       }
 
       reject(
-        'Cloudflare R2 Storage Adapter: read() is not supported. Images should be fetched from CDN URL. Use redirects instead.'
+        'Cloudflare R2 Storage Adapter: read() is not supported. Data should be fetched from CDN URL. Use redirects instead.'
       );
     });
   }
 
-  save(image: StorageBase.Image, targetDir?: string): Promise<string> {
+  save(fileInfo: StorageBase.Image, targetDir?: string): Promise<string> {
     log.debug(
       'Cloudflare R2 Storage Adapter: save(): ',
-      'image: ',
-      image,
+      'fileInfo: ',
+      fileInfo,
       'targetDir: ',
       targetDir
     );
@@ -169,22 +206,25 @@ export default class CloudflareR2Adapter extends StorageBase {
 
     return new Promise((resolve, reject) => {
       Promise.all([
-        this.getUniqueFileName(image, directory),
-        readFileAsync(image.path),
+        this.getUniqueFileName(fileInfo, directory),
+        readFileAsync(fileInfo.path),
       ])
-        .then(([filePath, fileBuffer]) => {
-          log.debug('Cloudflare R2 Storage Adapter: save(): saving ', filePath);
+        .then(([filePathR2, fileBuffer]) => {
+          log.debug(
+            'Cloudflare R2 Storage Adapter: save(): saving ',
+            filePathR2
+          );
           this.S3.send(
             new PutObjectCommand({
               Bucket: this.bucket,
               Body: fileBuffer,
-              ContentType: image.type,
+              ContentType: fileInfo.type,
               CacheControl: `max-age=${30 * 24 * 60 * 60}`,
-              Key: stripLeadingSlash(filePath),
+              Key: stripLeadingSlash(filePathR2),
             })
           ).then(
             () => {
-              resolve(`${this.domain}/${stripLeadingSlash(filePath)}`);
+              resolve(`${this.domain}/${stripLeadingSlash(filePathR2)}`);
             },
             reason => {
               reject(reason);
