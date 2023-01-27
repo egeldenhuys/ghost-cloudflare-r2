@@ -8,6 +8,7 @@
   - Implements `saveRaw` to force ghost to generate the `srcset` attribute for image cards
 - Save images and media using UUID as name
 - Compress resized images
+- Written in TypeScript for maintainability
 
 ## Installation
 The adapter can be installed using npm or Docker.
