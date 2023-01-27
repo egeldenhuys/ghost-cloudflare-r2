@@ -2,6 +2,7 @@
   "devDependencies": {
     "@types/express-serve-static-core": "^4.17.33",
     "@types/ghost-storage-base": "^0.0.1",
+    "@types/mime": "^3.0.1",
     "@types/node": "^14.11.2",
     "@types/sharp": "^0.31.1",
     "@types/uuid": "^9.0.0",
@@ -19,9 +20,9 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.257.0",
-    "file-type": "^18.2.0",
     "ghost-storage-base": "^1.0.0",
     "loglevel": "^1.8.1",
+    "mime": "^3.0.0",
     "sharp": "^0.31.3",
     "uuid": "^9.0.0"
   }

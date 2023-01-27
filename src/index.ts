@@ -6,6 +6,7 @@ const {getLogger} = pkg;
 import {Logger} from 'loglevel';
 import sharp from 'sharp';
 import {v4 as uuidv4} from 'uuid';
+import mime from 'mime';
 
 const log = getLogger('ghost-cloudflare-r2');
 setLogLevel(log, 'GHOST_STORAGE_ADAPTER_R2_LOG_LEVEL');
@@ -18,7 +19,6 @@ import {
 } from '@aws-sdk/client-s3';
 import path from 'path';
 import {readFile} from 'fs';
-import {fileTypeFromFile} from 'file-type';
 
 interface FileInfo extends StorageBase.Image {
   originalname: string;
@@ -388,14 +388,14 @@ export default class CloudflareR2Adapter extends StorageBase {
       Promise.all([
         this.getUniqueFileName(fileInfo, directory, uuid),
         readFileAsync(fileInfo.path),
-        fileTypeFromFile(fileInfo.path),
       ])
-        .then(([filePathR2, fileBuffer, fileType]) => {
-          if (
-            (fileInfo.type === '' || fileInfo.type === undefined) &&
-            fileType
-          ) {
-            fileInfo.type = fileType.mime;
+        .then(([filePathR2, fileBuffer]) => {
+          if (fileInfo.type === '' || fileInfo.type === undefined) {
+            const mimeType = mime.getType(fileInfo.path);
+            if (mimeType) {
+              log.debug('Detected mimeType:', mimeType);
+              fileInfo.type = mimeType;
+            }
           }
           log.debug(
             'Cloudflare R2 Storage Adapter: save(): saving',
