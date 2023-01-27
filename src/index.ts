@@ -1,7 +1,9 @@
-import StorageBase = require('ghost-storage-base');
+import StorageBase from 'ghost-storage-base';
 import {Handler} from 'express-serve-static-core';
-// eslint-disable-next-line node/no-unpublished-import
-import {getLogger, Logger} from 'loglevel';
+import pkg from 'loglevel';
+
+const {getLogger} = pkg;
+import {Logger} from 'loglevel';
 import sharp from 'sharp';
 import {v4 as uuidv4} from 'uuid';
 
@@ -16,8 +18,7 @@ import {
 } from '@aws-sdk/client-s3';
 import path from 'path';
 import {readFile} from 'fs';
-import {Readable} from 'stream';
-import {Blob} from 'buffer';
+import {fileTypeFromFile} from 'file-type';
 
 interface FileInfo extends StorageBase.Image {
   originalname: string;
@@ -357,7 +358,15 @@ export default class CloudflareR2Adapter extends StorageBase {
       targetDir
     );
 
-    const directory = targetDir || this.getTargetDir(this.pathPrefix);
+    let isImport = false;
+    if (targetDir) {
+      log.info('Cloudflare R2 Storage Adapter: save(): Detected import.');
+      isImport = true;
+      fileInfo.name = path.basename(fileInfo.name);
+      fileInfo.ext = path.extname(fileInfo.name);
+    }
+
+    const directory = this.getTargetDir(this.pathPrefix);
 
     return new Promise((resolve, reject) => {
       if (this.saveOriginal === 'false' && this.isOriginalImage(fileInfo)) {
@@ -365,21 +374,29 @@ export default class CloudflareR2Adapter extends StorageBase {
           'Cloudflare R2 Storage Adapter: save(): discarding original: ',
           fileInfo.name
         );
-        // Not sure if the URL for the original image is used
+        // Not sure if the URL for the original image is used.
+        // Should only be used if imageOptimization__resize is true since then the original (*_o.jpg) is not used.
         resolve('');
         return;
       }
 
       let uuid: string | null = null;
-      if (this.uuidName) {
+      if (this.uuidName && !isImport) {
         uuid = uuidv4();
       }
 
       Promise.all([
         this.getUniqueFileName(fileInfo, directory, uuid),
         readFileAsync(fileInfo.path),
+        fileTypeFromFile(fileInfo.path),
       ])
-        .then(([filePathR2, fileBuffer]) => {
+        .then(([filePathR2, fileBuffer, fileType]) => {
+          if (
+            (fileInfo.type === '' || fileInfo.type === undefined) &&
+            fileType
+          ) {
+            fileInfo.type = fileType.mime;
+          }
           log.debug(
             'Cloudflare R2 Storage Adapter: save(): saving',
             filePathR2
@@ -431,4 +448,4 @@ export default class CloudflareR2Adapter extends StorageBase {
   }
 }
 
-module.exports = CloudflareR2Adapter;
+// module.exports = CloudflareR2Adapter;

@@ -1,4 +1,6 @@
 {
+  "type": "module",
+  "exports": "./index.js",
   "devDependencies": {
     "@types/express-serve-static-core": "^4.17.33",
     "@types/ghost-storage-base": "^0.0.1",
@@ -19,6 +21,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.257.0",
+    "file-type": "^18.2.0",
     "ghost-storage-base": "^1.0.0",
     "loglevel": "^1.8.1",
     "sharp": "^0.31.3",
