@@ -283,7 +283,7 @@ export default class CloudflareR2Adapter extends StorageBase {
     }
 
     if (this.uuidName === 'true') {
-      return path.join(targetDir, uuidv4(), fileInfo.ext);
+      return path.join(targetDir, uuidv4() + fileInfo.ext);
     } else {
       return super.getUniqueFileName(fileInfo, targetDir);
     }
