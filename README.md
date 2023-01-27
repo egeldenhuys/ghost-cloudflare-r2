@@ -45,6 +45,7 @@ The storage adapter makes use of the following environment variables:
 | `GHOST_STORAGE_ADAPTER_R2_RESPONSIVE_IMAGES` | Generate an image for each width specified. Default `false`. Allowed values `true`, `false`        |
 | `GHOST_STORAGE_ADAPTER_R2_RESIZE_WIDTHS`     | Comma separated list of widths to resize the image when saving. Default `600,1000,1600,2400`       |
 | `GHOST_STORAGE_ADAPTER_R2_LOG_LEVEL`         | Log level for the storage adapter. Default `info`. Allowed values `debug`, `info`, `warn`, `error` |
+| `GHOST_STORAGE_ADAPTER_R2_UUID_NAME`         | Use UUID as name when storing images. Default `false`. Allowed values `true`, `false`               |
 
 The following Ghost configuration is required to activate the plugin for `images`, `media`, and `files`:
 ```json

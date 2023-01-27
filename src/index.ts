@@ -119,8 +119,7 @@ export default class CloudflareR2Adapter extends StorageBase {
       .split(',')
       .map(w => parseInt(w));
 
-    this.uuidName =
-      process.env.GHOST_STORAGE_ADAPTER_R2_RESIZE_WIDTHS || 'false';
+    this.uuidName = process.env.GHOST_STORAGE_ADAPTER_R2_UUID_NAME || 'false';
 
     if (this.responsiveImages === 'true') {
       // Ghost checks if a 'saveRaw' function exists on the storage adapter,
