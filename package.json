@@ -1,6 +1,4 @@
 {
-  "type": "module",
-  "exports": "./index.js",
   "devDependencies": {
     "@types/express-serve-static-core": "^4.17.33",
     "@types/ghost-storage-base": "^0.0.1",
