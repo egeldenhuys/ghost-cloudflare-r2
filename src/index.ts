@@ -372,7 +372,7 @@ export default class CloudflareR2Adapter extends StorageBase {
           ).then(
             () => {
               if (
-                !this.isOriginalImage(fileInfo) &&
+                this.isOriginalImage(fileInfo) &&
                 this.responsiveImages === 'true'
               ) {
                 log.info('Generating different image sizes...');
