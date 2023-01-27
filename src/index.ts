@@ -88,6 +88,7 @@ export default class CloudflareR2Adapter extends StorageBase {
   private resizeWidths: number[];
   public saveRaw: unknown = undefined;
   private uuidName: string;
+  private saveOriginal: string;
 
   constructor(config: Config = {}) {
     log.debug('Initialising ghost-cloudflare-r2 storage adapter');
@@ -120,6 +121,8 @@ export default class CloudflareR2Adapter extends StorageBase {
       .map(w => parseInt(w));
 
     this.uuidName = process.env.GHOST_STORAGE_ADAPTER_R2_UUID_NAME || 'false';
+    this.saveOriginal =
+      process.env.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL || 'true';
 
     if (this.responsiveImages === 'true') {
       // Ghost checks if a 'saveRaw' function exists on the storage adapter,
@@ -289,6 +292,10 @@ export default class CloudflareR2Adapter extends StorageBase {
     }
   }
 
+  isOriginalImage(fileInfo: FileInfo): boolean {
+    return !fileInfo.path.endsWith('_processed');
+  }
+
   save(fileInfo: FileInfo, targetDir?: string): Promise<string> {
     log.debug(
       'Cloudflare R2 Storage Adapter: save():',
@@ -301,6 +308,15 @@ export default class CloudflareR2Adapter extends StorageBase {
     const directory = targetDir || this.getTargetDir(this.pathPrefix);
 
     return new Promise((resolve, reject) => {
+      if (this.saveOriginal === 'false' && this.isOriginalImage(fileInfo)) {
+        log.info(
+          'Cloudflare R2 Storage Adapter: save(): discarding original: ',
+          fileInfo.name
+        );
+        // Not sure if the URL for the original image is used
+        resolve('');
+      }
+
       Promise.all([
         this.getUniqueFileName(fileInfo, directory),
         readFileAsync(fileInfo.path),
@@ -321,7 +337,7 @@ export default class CloudflareR2Adapter extends StorageBase {
           ).then(
             () => {
               if (
-                fileInfo.path.endsWith('_processed') &&
+                !this.isOriginalImage(fileInfo) &&
                 this.responsiveImages === 'true'
               ) {
                 log.info('Generating different image sizes...');
