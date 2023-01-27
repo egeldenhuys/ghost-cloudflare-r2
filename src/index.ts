@@ -448,4 +448,4 @@ export default class CloudflareR2Adapter extends StorageBase {
   }
 }
 
-// module.exports = CloudflareR2Adapter;
+module.exports = CloudflareR2Adapter;
