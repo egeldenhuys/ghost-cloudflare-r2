@@ -315,6 +315,7 @@ export default class CloudflareR2Adapter extends StorageBase {
         );
         // Not sure if the URL for the original image is used
         resolve('');
+        return;
       }
 
       Promise.all([
