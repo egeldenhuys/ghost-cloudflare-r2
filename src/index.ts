@@ -267,7 +267,11 @@ export default class CloudflareR2Adapter extends StorageBase {
     });
   }
 
-  saveResizedImages(fileInfo: FileInfo, fileBuffer: Buffer): Promise<boolean> {
+  saveResizedImages(
+    fileInfo: FileInfo,
+    fileBuffer: Buffer,
+    originalUuid?: string | null
+  ): Promise<boolean> {
     log.debug(
       'Cloudflare R2 Storage Adapter: saveResizedImages(): fileInfo:',
       fileInfo
@@ -281,7 +285,7 @@ export default class CloudflareR2Adapter extends StorageBase {
           );
 
           Promise.all([
-            this.getUniqueFileName(fileInfo, directory),
+            this.getUniqueFileName(fileInfo, directory, originalUuid),
             sharp(fileBuffer).resize({width: width}).toBuffer(),
           ])
             .then(([filePathR2, resizedBuffer]) => {
@@ -314,13 +318,17 @@ export default class CloudflareR2Adapter extends StorageBase {
     });
   }
 
-  getUniqueFileName(fileInfo: FileInfo, targetDir: string): string {
+  getUniqueFileName(
+    fileInfo: FileInfo,
+    targetDir: string,
+    uuid?: string | null
+  ): string {
     if (this.storageType === StorageType.Files) {
       return super.getUniqueFileName(fileInfo, targetDir);
     }
 
-    if (this.uuidName === 'true') {
-      return path.join(targetDir, uuidv4() + fileInfo.ext);
+    if (uuid) {
+      return path.join(targetDir, uuid + fileInfo.ext);
     } else {
       return super.getUniqueFileName(fileInfo, targetDir);
     }
@@ -352,8 +360,13 @@ export default class CloudflareR2Adapter extends StorageBase {
         return;
       }
 
+      let uuid: string | null = null;
+      if (this.uuidName) {
+        uuid = uuidv4();
+      }
+
       Promise.all([
-        this.getUniqueFileName(fileInfo, directory),
+        this.getUniqueFileName(fileInfo, directory, uuid),
         readFileAsync(fileInfo.path),
       ])
         .then(([filePathR2, fileBuffer]) => {
@@ -376,7 +389,7 @@ export default class CloudflareR2Adapter extends StorageBase {
                 this.responsiveImages === 'true'
               ) {
                 log.info('Generating different image sizes...');
-                this.saveResizedImages(fileInfo, fileBuffer)
+                this.saveResizedImages(fileInfo, fileBuffer, uuid)
                   .then(() => {
                     log.info('Generating different image sizes... Done');
                     resolve(`${this.domain}/${stripLeadingSlash(filePathR2)}`);
