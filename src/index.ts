@@ -16,6 +16,8 @@ import {
 } from '@aws-sdk/client-s3';
 import path from 'path';
 import {readFile} from 'fs';
+import {Readable} from 'stream';
+import {Blob} from 'buffer';
 
 interface FileInfo extends StorageBase.Image {
   originalname: string;
@@ -242,7 +244,18 @@ export default class CloudflareR2Adapter extends StorageBase {
       )
         .then(
           value => {
-            resolve(value.Body);
+            value.Body?.transformToByteArray()
+              .then(
+                (value: Uint8Array) => {
+                  resolve(Buffer.from(value));
+                },
+                (reason: unknown) => {
+                  reject(reason);
+                }
+              )
+              .catch((err: unknown) => {
+                reject(err);
+              });
           },
           reason => {
             reject(reason);
