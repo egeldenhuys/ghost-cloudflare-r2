@@ -386,7 +386,8 @@ export default class CloudflareR2Adapter extends StorageBase {
             () => {
               if (
                 this.isOriginalImage(fileInfo) &&
-                this.responsiveImages === 'true'
+                this.responsiveImages === 'true' &&
+                this.storageType === StorageType.Images
               ) {
                 log.info('Generating different image sizes...');
                 this.saveResizedImages(fileInfo, fileBuffer, uuid)
