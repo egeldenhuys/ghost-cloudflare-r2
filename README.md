@@ -1,6 +1,14 @@
 # Ghost Cloudflare R2 Storage Adapter
 [Cloudflare R2](https://www.cloudflare.com/products/r2/) storage adapter for [Ghost](https://github.com/TryGhost/Ghost).
 
+## Features
+- Save images in Cloudflare R2
+- Supports images, media and files
+- Resize images to emulate [Responsive Images](https://ghost.org/docs/themes/assets/)
+  - Implements `saveRaw` to force ghost to generate the `srcset` attribute for image cards
+- Save images and media using UUID as name
+- Compress resized images
+
 ## Installation
 The adapter can be installed using npm or Docker.
 
@@ -111,7 +119,6 @@ environment:
 ```
 
 ## TODO
-- [ ] Add option to use UUID for storing file names for privacy
 - [ ] Read adapter configuration from Ghost config as well as environment variables
 - [ ] Tag a version for deployment
 - [ ] Publish npm package
