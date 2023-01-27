@@ -12,6 +12,7 @@ import {
   S3Client,
   PutObjectCommand,
   HeadObjectCommand,
+  GetObjectCommand,
 } from '@aws-sdk/client-s3';
 import path from 'path';
 import {readFile} from 'fs';
@@ -219,17 +220,37 @@ export default class CloudflareR2Adapter extends StorageBase {
         reject(
           'Cloudflare R2 Storage Adapter: read(): argument "options" is undefined'
         );
+        return;
       }
 
       if (options?.path === undefined) {
         reject(
           'Cloudflare R2 Storage Adapter: read(): argument "options.path" is undefined'
         );
+        return;
       }
 
-      reject(
-        'Cloudflare R2 Storage Adapter: read() is not supported. Data should be fetched from CDN URL. Use redirects instead.'
+      const r2Path = stripLeadingSlash(
+        path.join(this.pathPrefix, options?.path)
       );
+
+      this.S3.send(
+        new GetObjectCommand({
+          Bucket: this.bucket,
+          Key: r2Path,
+        })
+      )
+        .then(
+          value => {
+            resolve(value.Body);
+          },
+          reason => {
+            reject(reason);
+          }
+        )
+        .catch(err => {
+          reject(err);
+        });
     });
   }
 
