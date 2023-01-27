@@ -3,6 +3,7 @@ import {Handler} from 'express-serve-static-core';
 // eslint-disable-next-line node/no-unpublished-import
 import {getLogger, Logger} from 'loglevel';
 import sharp from 'sharp';
+import {v4 as uuidv4} from 'uuid';
 
 const log = getLogger('ghost-cloudflare-r2');
 setLogLevel(log, 'GHOST_STORAGE_ADAPTER_R2_LOG_LEVEL');
@@ -14,6 +15,11 @@ import {
 } from '@aws-sdk/client-s3';
 import path from 'path';
 import {readFile} from 'fs';
+
+interface FileInfo extends StorageBase.Image {
+  originalname: string;
+  ext: string;
+}
 
 function stripLeadingSlash(s: string): string {
   return s.indexOf('/') === 0 ? s.substring(1) : s;
@@ -81,6 +87,7 @@ export default class CloudflareR2Adapter extends StorageBase {
   private responsiveImages: string;
   private resizeWidths: number[];
   public saveRaw: unknown = undefined;
+  private uuidName: string;
 
   constructor(config: Config = {}) {
     log.debug('Initialising ghost-cloudflare-r2 storage adapter');
@@ -111,6 +118,9 @@ export default class CloudflareR2Adapter extends StorageBase {
     )
       .split(',')
       .map(w => parseInt(w));
+
+    this.uuidName =
+      process.env.GHOST_STORAGE_ADAPTER_R2_RESIZE_WIDTHS || 'false';
 
     if (this.responsiveImages === 'true') {
       // Ghost checks if a 'saveRaw' function exists on the storage adapter,
@@ -221,10 +231,7 @@ export default class CloudflareR2Adapter extends StorageBase {
     });
   }
 
-  saveResizedImages(
-    fileInfo: StorageBase.Image,
-    fileBuffer: Buffer
-  ): Promise<boolean> {
+  saveResizedImages(fileInfo: FileInfo, fileBuffer: Buffer): Promise<boolean> {
     log.debug(
       'Cloudflare R2 Storage Adapter: saveResizedImages(): fileInfo:',
       fileInfo
@@ -271,7 +278,19 @@ export default class CloudflareR2Adapter extends StorageBase {
     });
   }
 
-  save(fileInfo: StorageBase.Image, targetDir?: string): Promise<string> {
+  getUniqueFileName(fileInfo: FileInfo, targetDir: string): string {
+    if (this.storageType === StorageType.Files) {
+      return super.getUniqueFileName(fileInfo, targetDir);
+    }
+
+    if (this.uuidName === 'true') {
+      return path.join(targetDir, uuidv4(), fileInfo.ext);
+    } else {
+      return super.getUniqueFileName(fileInfo, targetDir);
+    }
+  }
+
+  save(fileInfo: FileInfo, targetDir?: string): Promise<string> {
     log.debug(
       'Cloudflare R2 Storage Adapter: save():',
       'fileInfo:',
