@@ -92,6 +92,7 @@ export default class CloudflareR2Adapter extends StorageBase {
   public saveRaw: unknown = undefined;
   private uuidName: string;
   private saveOriginal: string;
+  private jpegQuality: number | undefined;
 
   constructor(config: Config = {}) {
     log.debug('Initialising ghost-cloudflare-r2 storage adapter');
@@ -126,6 +127,10 @@ export default class CloudflareR2Adapter extends StorageBase {
     this.uuidName = process.env.GHOST_STORAGE_ADAPTER_R2_UUID_NAME || 'false';
     this.saveOriginal =
       process.env.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL || 'true';
+
+    this.jpegQuality = process.env.GHOST_STORAGE_ADAPTER_R2_RESIZE_JPEG_QUALITY
+      ? parseInt(process.env.GHOST_STORAGE_ADAPTER_R2_RESIZE_JPEG_QUALITY)
+      : undefined;
 
     if (this.responsiveImages === 'true') {
       // Ghost checks if a 'saveRaw' function exists on the storage adapter,
@@ -286,7 +291,12 @@ export default class CloudflareR2Adapter extends StorageBase {
 
           Promise.all([
             this.getUniqueFileName(fileInfo, directory, originalUuid),
-            sharp(fileBuffer).resize({width: width}).toBuffer(),
+            this.jpegQuality && fileInfo.type === 'image/jpeg'
+              ? sharp(fileBuffer)
+                  .resize({width: width})
+                  .jpeg({quality: this.jpegQuality})
+                  .toBuffer()
+              : sharp(fileBuffer).resize({width: width}).toBuffer(),
           ])
             .then(([filePathR2, resizedBuffer]) => {
               log.debug(
