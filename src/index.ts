@@ -290,7 +290,7 @@ export default class CloudflareR2Adapter extends StorageBase {
             `${stripEndingSlash(this.pathPrefix)}/size/w${width}`
           );
 
-          Promise.all([
+          return Promise.all([
             this.getUniqueFileName(fileInfo, directory, originalUuid),
             this.jpegQuality && fileInfo.type === 'image/jpeg'
               ? sharp(fileBuffer)
@@ -313,7 +313,9 @@ export default class CloudflareR2Adapter extends StorageBase {
                   CacheControl: `max-age=${30 * 24 * 60 * 60}`,
                   Key: stripLeadingSlash(filePathR2),
                 })
-              );
+              ).then(() => {
+                log.info('Saved', filePathR2);
+              });
             })
             .catch(reason => {
               reject(reason);
@@ -321,6 +323,7 @@ export default class CloudflareR2Adapter extends StorageBase {
         })
       )
         .then(() => {
+          log.debug('Finished saving resized images for', fileInfo.name);
           resolve(true);
         })
         .catch(reason => {
@@ -411,6 +414,7 @@ export default class CloudflareR2Adapter extends StorageBase {
             })
           ).then(
             () => {
+              log.info('Saved', filePathR2);
               if (
                 this.isOriginalImage(fileInfo) &&
                 this.responsiveImages === 'true' &&
