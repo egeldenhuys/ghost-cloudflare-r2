@@ -66,6 +66,7 @@ export class ContentImporter {
 
       if (!contentPath.startsWith('/content/images')) {
         log.info(`Skipping ${filePath}`);
+        continue;
       }
 
       log.info(`Importing ${filePath}`);
