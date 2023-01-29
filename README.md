@@ -41,22 +41,24 @@ Requires Docker to be installed. This has the advantage of not requiring you to 
 ## Configuration
 The storage adapter makes use of the following environment variables:
 
-| Environment Variable                            | Description                                                                                                                                                        |
-|-------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `GHOST_STORAGE_ADAPTER_R2_ACCOUNT_ID`           | Cloudflare R2 Account ID                                                                                                                                           |
-| `GHOST_STORAGE_ADAPTER_R2_ACCESS_KEY_ID`        | Access Key ID from Cloudflare R2 API Token                                                                                                                         |
-| `GHOST_STORAGE_ADAPTER_R2_SECRET_ACCESS_KEY`    | Secret Access Key from Cloudflare R2 API Token                                                                                                                     |
-| `GHOST_STORAGE_ADAPTER_R2_BUCKET`               | R2 Bucket to use for storage                                                                                                                                       |
-| `GHOST_STORAGE_ADAPTER_R2_DOMAIN`               | R2 Custom domain to use for serving content                                                                                                                        |
-| `GHOST_STORAGE_ADAPTER_R2_IMAGES_URL_PREFIX`    | URL prefix to use for storing and serving images from R2. Default `/content/images/`                                                                               |
-| `GHOST_STORAGE_ADAPTER_R2_MEDIA_URL_PREFIX`     | URL prefix to use for storing and serving media (video) from R2. Default `/content/media/`                                                                         |
-| `GHOST_STORAGE_ADAPTER_R2_FILES_URL_PREFIX`     | URL prefix to use for storing and serving files from R2. Default `/content/files/`                                                                                 |
-| `GHOST_STORAGE_ADAPTER_R2_RESPONSIVE_IMAGES`    | Generate an image for each width specified. Experimental: uses undocumented Ghost internal logic. Default `false`. Allowed values `true`, `false`                  |
-| `GHOST_STORAGE_ADAPTER_R2_RESIZE_WIDTHS`        | Comma separated list of widths to resize the image when saving. This should match the `srcset` of your theme and any Ghost overrides. Default `600,1000,1600,2400` |
-| `GHOST_STORAGE_ADAPTER_R2_LOG_LEVEL`            | Log level for the storage adapter. Default `info`. Allowed values `debug`, `info`, `warn`, `error`                                                                 |
-| `GHOST_STORAGE_ADAPTER_R2_UUID_NAME`            | Use UUID as name when storing images. May cause issues when used with Responsive Images. Default `false`. Allowed values `true`, `false`                           |
-| `GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL`        | Save the original unoptimized image. May cause issues when used with Responsive Images. Default `true`. Allowed Values `true`, `false`                             |
-| `GHOST_STORAGE_ADAPTER_R2_RESIZE_JPEG_QUALITY`  | Quality to use when resizing JPEG images. Default: `80`                                                                                                            |
+| Environment Variable                           | Description                                                                                                                                                                             |
+|------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `GHOST_STORAGE_ADAPTER_R2_ENDPOINT`            | Cloudflare R2 Endpoint. Example: `https://<account_id>.r2.cloudflarestorage.com`                                                                                                        |
+| `GHOST_STORAGE_ADAPTER_R2_ACCESS_KEY_ID`       | Access Key ID from Cloudflare R2 API Token                                                                                                                                              |
+| `GHOST_STORAGE_ADAPTER_R2_SECRET_ACCESS_KEY`   | Secret Access Key from Cloudflare R2 API Token                                                                                                                                          |
+| `GHOST_STORAGE_ADAPTER_R2_BUCKET`              | R2 Bucket to use for storage                                                                                                                                                            |
+| `GHOST_STORAGE_ADAPTER_R2_DOMAIN`              | R2 Custom domain to use for serving content                                                                                                                                             |
+| `GHOST_STORAGE_ADAPTER_R2_IMAGES_URL_PREFIX`   | URL prefix to use for storing and serving images from R2. Default `/content/images/`                                                                                                    |
+| `GHOST_STORAGE_ADAPTER_R2_MEDIA_URL_PREFIX`    | URL prefix to use for storing and serving media (video) from R2. Default `/content/media/`                                                                                              |
+| `GHOST_STORAGE_ADAPTER_R2_FILES_URL_PREFIX`    | URL prefix to use for storing and serving files from R2. Default `/content/files/`                                                                                                      |
+| `GHOST_STORAGE_ADAPTER_R2_RESPONSIVE_IMAGES`   | Generate an image for each width specified. Experimental: uses undocumented Ghost internal logic. Default `false`. Allowed values `true`, `false`                                       |
+| `GHOST_STORAGE_ADAPTER_R2_RESIZE_WIDTHS`       | Comma separated list of widths to resize the image when saving. This should match the `srcset` of your theme and any Ghost overrides. Default `300,600,1000,1600,400,750,960,1140,1200` |
+| `GHOST_STORAGE_ADAPTER_R2_LOG_LEVEL`           | Log level for the storage adapter. Default `info`. Allowed values `debug`, `info`, `warn`, `error`                                                                                      |
+| `GHOST_STORAGE_ADAPTER_R2_UUID_NAME`           | Use UUID as name when storing images. May cause issues when used with Responsive Images. Default `false`. Allowed values `true`, `false`                                                |
+| `GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL`       | Save the original unoptimized image. May cause issues when used with Responsive Images. Default `true`. Allowed Values `true`, `false`                                                  |
+| `GHOST_STORAGE_ADAPTER_R2_RESIZE_JPEG_QUALITY` | Quality to use when resizing JPEG images. Default: `80`                                                                                                                                 |
+| `GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE`        | This needs to be set to `false` if Image resizing is disabled for Ghost ( env `imageOptimization__resize`). Default `true`                                                              |
+| `GHOST_STORAGE_ADAPTER_R2_CONTENT_PREFIX`      | Prefix to apply to all prefixes. Default empty. Must not contain a trailing slash. Example `/blog_data`                                                                                 |
 
 The following Ghost configuration is required to activate the plugin for `images`, `media`, and `files`:
 ```json
@@ -102,7 +104,7 @@ environment:
   storage__media__storage_type_media: true
   storage__files__adapter: ghost-cloudflare-r2
   storage__files__storage_type_files: true
-  GHOST_STORAGE_ADAPTER_R2_ACCOUNT_ID: xxxxxx
+  GHOST_STORAGE_ADAPTER_R2_ENDPOINT: https://<account_id>.r2.cloudflarestorage.com
   GHOST_STORAGE_ADAPTER_R2_ACCESS_KEY_ID: xxxxxx
   GHOST_STORAGE_ADAPTER_R2_SECRET_ACCESS_KEY: xxxxxx
   GHOST_STORAGE_ADAPTER_R2_BUCKET: my-ghost-bucket
@@ -120,7 +122,7 @@ environment:
 ```
 
 ## TODO
-- [ ] Read adapter configuration from Ghost config as well as environment variables
 - [ ] Tag a version for deployment
 - [ ] Publish npm package
-- [ ] Tests
+- [ ] Tests can be improved
+  - [ ] Don't depend on external system
