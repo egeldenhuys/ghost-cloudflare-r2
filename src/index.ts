@@ -357,7 +357,7 @@ export default class CloudflareR2Adapter extends StorageBase {
   }
 
   exists(fileName: string, targetDir?: string): Promise<boolean> {
-    log.debug('exists():', 'fileName:', fileName, 'targetDir:', targetDir);
+    log.info('exists():', 'fileName:', fileName, 'targetDir:', targetDir);
 
     let targetPath: string;
 
@@ -452,7 +452,7 @@ export default class CloudflareR2Adapter extends StorageBase {
     originalUuid: string | null,
     isImport: boolean
   ): Promise<boolean> {
-    log.debug(
+    log.info(
       'Cloudflare R2 Storage Adapter: saveResizedImages(): fileInfo:',
       fileInfo
     );
@@ -579,7 +579,8 @@ export default class CloudflareR2Adapter extends StorageBase {
       if (
         !this.saveOriginal &&
         this.isOriginalImage(fileInfo) &&
-        this.ghostResize
+        this.ghostResize &&
+        !isImport
       ) {
         log.info(
           'Cloudflare R2 Storage Adapter: save(): discarding original: ',
@@ -625,7 +626,8 @@ export default class CloudflareR2Adapter extends StorageBase {
               log.info('Saved', filePathR2);
               if (
                 ((this.ghostResize && !this.isOriginalImage(fileInfo)) ||
-                  (!this.ghostResize && this.isOriginalImage(fileInfo))) &&
+                  (!this.ghostResize && this.isOriginalImage(fileInfo)) ||
+                  isImport) &&
                 this.responsiveImages &&
                 this.storageType === StorageType.Images
               ) {
