@@ -1,0 +1,25 @@
+version: '3.3'
+
+services:
+  # minio server service
+  minio-server:
+    image: minio/minio
+    ports:
+      - "9000:9000" # API
+      - "9001:9001" # Console
+    environment:
+      MINIO_ACCESS_KEY: TEST_MINIO_ACCESS_KEY
+      MINIO_SECRET_KEY: TEST_MINIO_SECRET_KEY
+    command: server /data --console-address ":9001"
+
+  createbuckets:
+    image: minio/mc
+    depends_on:
+      - minio-server
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc config host add myminio http://minio-server:9000 TEST_MINIO_ACCESS_KEY TEST_MINIO_SECRET_KEY;
+      /usr/bin/mc rb --force myminio/test-bucket;
+      /usr/bin/mc mb myminio/test-bucket;
+      exit 0;
+      "

@@ -63,6 +63,14 @@ const yearMonth = `${new Date().getFullYear()}/${(new Date().getMonth() + 1)
   .toString()
   .padStart(2, '0')}`;
 
+// See docker-compose.yml
+process.env.GHOST_STORAGE_ADAPTER_R2_ENDPOINT = 'http://127.0.0.1:9000';
+process.env.GHOST_STORAGE_ADAPTER_R2_ACCESS_KEY_ID = 'TEST_MINIO_ACCESS_KEY';
+process.env.GHOST_STORAGE_ADAPTER_R2_SECRET_ACCESS_KEY =
+  'TEST_MINIO_SECRET_KEY';
+process.env.GHOST_STORAGE_ADAPTER_R2_BUCKET = 'test-bucket';
+process.env.GHOST_STORAGE_ADAPTER_R2_DOMAIN = 'https://cdn.example.com';
+
 describe('post: save(): imageOptimization__resize: false', () => {
   beforeEach(() => {
     process.env.GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE = 'false';
