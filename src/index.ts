@@ -21,14 +21,19 @@ import path from 'path';
 import {readFile} from 'fs';
 
 export interface FileInfo extends StorageBase.Image {
-  originalname: string;
+  originalname?: string;
+  targetDir?: string;
+  newPath?: string;
+  originalPath?: string;
   fieldname?: string;
   encoding?: string;
   mimetype?: string;
   destination?: string;
   filename?: string;
   size?: number;
-  ext: string;
+  ext?: string;
+  // type is undefined when being imported
+  // type?: string;
 }
 
 function stripLeadingSlash(s: string): string {
@@ -266,6 +271,7 @@ export default class CloudflareR2Adapter extends StorageBase {
   private saveOriginal: boolean;
   private jpegQuality: number | undefined;
   private ghostResize: boolean;
+  private contentPrefix: string;
 
   constructor(config: Config = {}) {
     log.debug('Initialising ghost-cloudflare-r2 storage adapter');
@@ -317,9 +323,8 @@ export default class CloudflareR2Adapter extends StorageBase {
       this.storageType = StorageType.Images;
       this.pathPrefix = this.imagesUrlPrefix;
     }
-
-    this.pathPrefix =
-      config.GHOST_STORAGE_ADAPTER_R2_CONTENT_PREFIX + this.pathPrefix;
+    this.contentPrefix = config.GHOST_STORAGE_ADAPTER_R2_CONTENT_PREFIX || '';
+    this.pathPrefix = this.contentPrefix + this.pathPrefix;
 
     this.uuidName = <boolean>config.GHOST_STORAGE_ADAPTER_R2_UUID_NAME;
     this.saveOriginal = <boolean>config.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL;
@@ -444,7 +449,8 @@ export default class CloudflareR2Adapter extends StorageBase {
   saveResizedImages(
     fileInfo: FileInfo,
     fileBuffer: Buffer,
-    originalUuid?: string | null
+    originalUuid: string | null,
+    isImport: boolean
   ): Promise<boolean> {
     log.debug(
       'Cloudflare R2 Storage Adapter: saveResizedImages(): fileInfo:',
@@ -454,9 +460,28 @@ export default class CloudflareR2Adapter extends StorageBase {
     return new Promise((resolve, reject) => {
       Promise.all(
         this.resizeWidths.map(width => {
-          const directory = this.getTargetDir(
+          let directory = this.getTargetDir(
             `${stripEndingSlash(this.pathPrefix)}/size/w${width}`
           );
+
+          if (isImport) {
+            // transform /content/images/2022/12/image.jpg
+            // Into /content_prefix/content/images/size/w_x/2022/12
+            if (fileInfo.newPath === undefined) {
+              reject(`Could not determine newPath for image ${fileInfo.path}`);
+              return;
+            }
+
+            const oldDir = stripLeadingSlash(fileInfo.newPath)
+              .split('/')
+              .slice(0, -1);
+            if (oldDir === undefined) {
+              reject(`Could not determine newPath for image ${fileInfo.path}`);
+              return;
+            }
+            // WARNING: assume old path structure was in the format /content/images/size/wX/image.jpg
+            directory = `${this.contentPrefix}/${oldDir[0]}/${oldDir[1]}/size/w${width}/${oldDir[2]}/${oldDir[3]}`;
+          }
 
           return Promise.all([
             this.getUniqueFileName(fileInfo, directory, originalUuid),
@@ -541,7 +566,14 @@ export default class CloudflareR2Adapter extends StorageBase {
       fileInfo.ext = path.extname(fileInfo.name);
     }
 
-    const directory = this.getTargetDir(this.pathPrefix);
+    let directory = this.getTargetDir(this.pathPrefix);
+
+    // getTargetDir adds year/month. For import we want the original path
+    if (isImport) {
+      directory =
+        this.contentPrefix +
+        fileInfo.newPath?.split('/').slice(0, -1).join('/');
+    }
 
     return new Promise((resolve, reject) => {
       if (
@@ -598,7 +630,7 @@ export default class CloudflareR2Adapter extends StorageBase {
                 this.storageType === StorageType.Images
               ) {
                 log.info('Generating different image sizes...');
-                this.saveResizedImages(fileInfo, fileBuffer, uuid)
+                this.saveResizedImages(fileInfo, fileBuffer, uuid, isImport)
                   .then(() => {
                     log.info('Generating different image sizes... Done');
                     resolve(`${this.domain}/${stripLeadingSlash(filePathR2)}`);
