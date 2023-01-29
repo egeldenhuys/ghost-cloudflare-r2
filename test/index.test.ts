@@ -13,7 +13,12 @@ function randomColorComponent() {
  * Creates a random image
  * Source: https://github.com/davidpadbury/random-image-generator/blob/master/index.js
  */
-async function generateImage(width: number, height: number, filePath: string) {
+async function generateImage(
+  width: number,
+  height: number,
+  filePath: string,
+  mimeType?: string
+) {
   const buffer = Buffer.alloc(width * height * 3);
 
   for (let x = 0; x < width; x++) {
@@ -28,15 +33,27 @@ async function generateImage(width: number, height: number, filePath: string) {
 
   fs.mkdirSync(filePath.split('/').slice(0, -1).join('/'), {recursive: true});
 
-  await sharp(buffer, {
-    raw: {
-      width: width,
-      height: height,
-      channels: 3,
-    },
-  })
-    .jpeg()
-    .toFile(filePath);
+  if (mimeType === 'image/jpeg') {
+    await sharp(buffer, {
+      raw: {
+        width: width,
+        height: height,
+        channels: 3,
+      },
+    })
+      .jpeg()
+      .toFile(filePath);
+  } else if (mimeType === 'image/png') {
+    await sharp(buffer, {
+      raw: {
+        width: width,
+        height: height,
+        channels: 3,
+      },
+    })
+      .png()
+      .toFile(filePath);
+  }
 }
 
 function exec(command: string) {
@@ -126,6 +143,45 @@ describe('post: save(): imageOptimization__resize: false', () => {
 
     await expect(
       adapter.exists(`${contentPrefix}/content/images/${yearMonth}/snake.jpg`)
+    ).resolves.toBe(true);
+  });
+
+  test('save() single: png', async () => {
+    const adapter = new CloudflareR2Adapter({
+      GHOST_STORAGE_ADAPTER_R2_CONTENT_PREFIX: contentPrefix,
+    });
+
+    const fileName = makeid(32);
+    const filePath = `/tmp/${fileName}`;
+    await generateImage(100, 100, filePath, 'image/png');
+
+    await expect(
+      adapter.exists(contentPrefix + `/content/images/${yearMonth}/snake.png`)
+    ).resolves.toBe(false);
+
+    await expect(
+      adapter.save(
+        {
+          fieldname: 'file',
+          originalname: 'snake.png',
+          encoding: '7bit',
+          mimetype: 'image/png',
+          destination: '/tmp',
+          filename: fileName,
+          path: filePath,
+          size: -1,
+          name: 'snake.png',
+          type: 'image/png',
+          ext: '.png',
+        },
+        undefined
+      )
+    ).resolves.toBe(
+      `https://cdn.example.com${contentPrefix}/content/images/${yearMonth}/snake.png`
+    );
+
+    await expect(
+      adapter.exists(`${contentPrefix}/content/images/${yearMonth}/snake.png`)
     ).resolves.toBe(true);
   });
 
@@ -272,6 +328,69 @@ describe('post: save(): imageOptimization__resize: false', () => {
       await expect(
         adapter.exists(
           contentPrefix + `/content/images/size/w${w}/${yearMonth}/snake.jpg`
+        )
+      ).resolves.toBe(true);
+    }
+  });
+
+  test('save() single: png, RESPONSIVE_IMAGES: true', async () => {
+    process.env.GHOST_STORAGE_ADAPTER_R2_RESPONSIVE_IMAGES = 'true';
+
+    const adapter = new CloudflareR2Adapter({
+      GHOST_STORAGE_ADAPTER_R2_CONTENT_PREFIX: contentPrefix,
+    });
+
+    const fileName = makeid(32);
+    const filePath = `/tmp/${fileName}`;
+    await generateImage(100, 100, filePath, 'image/png');
+
+    await expect(
+      adapter.exists(contentPrefix + `/content/images/${yearMonth}/snake.png`)
+    ).resolves.toBe(false);
+
+    const resizeWidths = (<string>(
+      process.env.GHOST_STORAGE_ADAPTER_R2_RESIZE_WIDTHS
+    ))
+      .split(',')
+      .map(w => parseInt(w));
+
+    for (const w of resizeWidths) {
+      await expect(
+        adapter.exists(
+          contentPrefix + `/content/images/size/w${w}/${yearMonth}/snake.png`
+        )
+      ).resolves.toBe(false);
+    }
+
+    await expect(
+      adapter.save(
+        {
+          fieldname: 'file',
+          originalname: 'snake.png',
+          encoding: '7bit',
+          mimetype: 'image/png',
+          destination: '/tmp',
+          filename: fileName,
+          path: filePath,
+          size: -1,
+          name: 'snake.png',
+          type: 'image/png',
+          ext: '.jpg',
+        },
+        undefined
+      )
+    ).resolves.toBe(
+      `https://cdn.example.com${contentPrefix}/content/images/${yearMonth}/snake.png`
+    );
+
+    await expect(
+      adapter.exists(`${contentPrefix}/content/images/${yearMonth}/snake.png`)
+    ).resolves.toBe(true);
+
+    for (const w of resizeWidths) {
+      await expect(
+        adapter.exists(
+          contentPrefix + `/content/images/size/w${w}/${yearMonth}/snake.png`
         )
       ).resolves.toBe(true);
     }
