@@ -103,6 +103,28 @@ describe('import: save(): imageOptimization__resize: true', () => {
     ).resolves.toBe(true);
   });
 
+  test('import single: only upload files in content/images', async () => {
+    const adapter = new CloudflareR2Adapter();
+
+    const fileName = makeid(32) + '.jpg';
+    const testDir = 'test_dir_' + makeid(12);
+    const filePath = `/tmp/${testDir}/content/images/2021/08/${fileName}`;
+
+    await generateImage(100, 100, filePath);
+    await generateImage(100, 100, `/tmp/${testDir}/content/bad/bad.jpg`);
+
+    await expect(
+      adapter.exists(contentPrefix + `/content/images/2021/08/${fileName}`)
+    ).resolves.toBe(false);
+
+    const contentImporter = new ContentImporter();
+    await contentImporter.run(`/tmp/${testDir}`);
+
+    await expect(
+      adapter.exists(contentPrefix + `/content/images/2021/08/${fileName}`)
+    ).resolves.toBe(true);
+  });
+
   test('import single: uploads when already exists', async () => {
     const adapter = new CloudflareR2Adapter();
 

@@ -550,7 +550,7 @@ export default class CloudflareR2Adapter extends StorageBase {
     targetDir?: string,
     forceUuid?: string
   ): Promise<string> {
-    log.debug(
+    log.info(
       'Cloudflare R2 Storage Adapter: save():',
       'fileInfo:',
       fileInfo,

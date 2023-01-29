@@ -60,6 +60,14 @@ export class ContentImporter {
     const files = getAllFiles(contentDirParent, []);
 
     for (const filePath of files) {
+      const contentPath = filePath.slice(
+        stripEndingSlash(contentDirParent).length
+      );
+
+      if (!contentPath.startsWith('/content/images')) {
+        log.info(`Skipping ${filePath}`);
+      }
+
       log.info(`Importing ${filePath}`);
       const name = filePath.slice(
         (stripEndingSlash(contentDirParent) + '/content/images/').length
