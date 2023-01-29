@@ -22,6 +22,12 @@ import {readFile} from 'fs';
 
 export interface FileInfo extends StorageBase.Image {
   originalname: string;
+  fieldname?: string;
+  encoding?: string;
+  mimetype?: string;
+  destination?: string;
+  filename?: string;
+  size?: number;
   ext: string;
 }
 
@@ -79,11 +85,13 @@ interface Config {
   GHOST_STORAGE_ADAPTER_R2_IMAGES_URL_PREFIX?: string;
   GHOST_STORAGE_ADAPTER_R2_MEDIA_URL_PREFIX?: string;
   GHOST_STORAGE_ADAPTER_R2_FILES_URL_PREFIX?: string;
+  GHOST_STORAGE_ADAPTER_R2_CONTENT_PREFIX?: string;
   GHOST_STORAGE_ADAPTER_R2_RESPONSIVE_IMAGES?: boolean;
   GHOST_STORAGE_ADAPTER_R2_RESIZE_WIDTHS?: string;
   GHOST_STORAGE_ADAPTER_R2_UUID_NAME?: boolean;
   GHOST_STORAGE_ADAPTER_R2_RESIZE_JPEG_QUALITY?: number;
   GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL?: boolean;
+  GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE?: boolean;
 }
 
 function mergeConfigWithEnv(config: Config): Config {
@@ -106,6 +114,11 @@ function mergeConfigWithEnv(config: Config): Config {
   config.GHOST_STORAGE_ADAPTER_R2_SECRET_ACCESS_KEY =
     process.env.GHOST_STORAGE_ADAPTER_R2_SECRET_ACCESS_KEY ||
     config.GHOST_STORAGE_ADAPTER_R2_SECRET_ACCESS_KEY;
+
+  config.GHOST_STORAGE_ADAPTER_R2_CONTENT_PREFIX =
+    process.env.GHOST_STORAGE_ADAPTER_R2_CONTENT_PREFIX ||
+    config.GHOST_STORAGE_ADAPTER_R2_CONTENT_PREFIX ||
+    '';
 
   config.GHOST_STORAGE_ADAPTER_R2_IMAGES_URL_PREFIX =
     process.env.GHOST_STORAGE_ADAPTER_R2_IMAGES_URL_PREFIX ||
@@ -143,9 +156,19 @@ function mergeConfigWithEnv(config: Config): Config {
     process.env.GHOST_STORAGE_ADAPTER_R2_UUID_NAME === 'true'
   ) {
     uuidName = true;
+  } else if (
+    process.env.GHOST_STORAGE_ADAPTER_R2_UUID_NAME &&
+    process.env.GHOST_STORAGE_ADAPTER_R2_UUID_NAME === 'false'
+  ) {
+    uuidName = false;
+  } else if (process.env.GHOST_STORAGE_ADAPTER_R2_UUID_NAME) {
+    throw new Error(
+      `Environment variable GHOST_STORAGE_ADAPTER_R2_UUID_NAME contains invalid value ${process.env.GHOST_STORAGE_ADAPTER_R2_UUID_NAME}`
+    );
   }
+
   config.GHOST_STORAGE_ADAPTER_R2_UUID_NAME =
-    uuidName || config.GHOST_STORAGE_ADAPTER_R2_UUID_NAME || false;
+    uuidName ?? (config.GHOST_STORAGE_ADAPTER_R2_UUID_NAME || false);
 
   let jpegQuality: number | undefined;
   if (process.env.GHOST_STORAGE_ADAPTER_R2_RESIZE_JPEG_QUALITY) {
@@ -162,9 +185,40 @@ function mergeConfigWithEnv(config: Config): Config {
     process.env.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL === 'true'
   ) {
     saveOriginal = true;
+  } else if (
+    process.env.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL &&
+    process.env.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL === 'false'
+  ) {
+    saveOriginal = false;
+  } else if (process.env.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL) {
+    throw new Error(
+      `Environment variable GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL contains invalid value ${process.env.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL}`
+    );
   }
+
   config.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL =
-    saveOriginal || config.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL || false;
+    saveOriginal ?? (config.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL || true);
+
+  let ghostResize: boolean | undefined;
+  if (
+    process.env.GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE &&
+    process.env.GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE === 'true'
+  ) {
+    ghostResize = true;
+  } else if (
+    process.env.GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE &&
+    process.env.GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE === 'false'
+  ) {
+    ghostResize = false;
+  } else if (process.env.GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE) {
+    throw new Error(
+      `Environment variable GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE contains invalid value ${process.env.GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE}`
+    );
+  }
+
+  config.GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE =
+    ghostResize ?? (config.GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE || true);
+
   return config;
 }
 
@@ -211,12 +265,12 @@ export default class CloudflareR2Adapter extends StorageBase {
   private uuidName: boolean;
   private saveOriginal: boolean;
   private jpegQuality: number | undefined;
-  private config: Config;
+  private ghostResize: boolean;
 
   constructor(config: Config = {}) {
     log.debug('Initialising ghost-cloudflare-r2 storage adapter');
     super();
-    this.config = mergeConfigWithEnv(config);
+    mergeConfigWithEnv(config);
     checkConfig(config);
 
     this.bucket = <string>config.GHOST_STORAGE_ADAPTER_R2_BUCKET;
@@ -264,8 +318,12 @@ export default class CloudflareR2Adapter extends StorageBase {
       this.pathPrefix = this.imagesUrlPrefix;
     }
 
+    this.pathPrefix =
+      config.GHOST_STORAGE_ADAPTER_R2_CONTENT_PREFIX + this.pathPrefix;
+
     this.uuidName = <boolean>config.GHOST_STORAGE_ADAPTER_R2_UUID_NAME;
     this.saveOriginal = <boolean>config.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL;
+    this.ghostResize = <boolean>config.GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE;
 
     log.info(
       'Cloudflare R2 Storage Adapter: handling',
@@ -320,11 +378,7 @@ export default class CloudflareR2Adapter extends StorageBase {
             }
           },
           reason => {
-            if (reason.$metadata.httpStatusCode === 404) {
-              resolve(false);
-            } else {
-              reject(reason);
-            }
+            resolve(false);
           }
         )
         .catch(reason => {
@@ -466,7 +520,11 @@ export default class CloudflareR2Adapter extends StorageBase {
     return !fileInfo.path.endsWith('_processed');
   }
 
-  save(fileInfo: FileInfo, targetDir?: string): Promise<string> {
+  save(
+    fileInfo: FileInfo,
+    targetDir?: string,
+    forceUuid?: string
+  ): Promise<string> {
     log.debug(
       'Cloudflare R2 Storage Adapter: save():',
       'fileInfo:',
@@ -486,7 +544,11 @@ export default class CloudflareR2Adapter extends StorageBase {
     const directory = this.getTargetDir(this.pathPrefix);
 
     return new Promise((resolve, reject) => {
-      if (!this.saveOriginal && this.isOriginalImage(fileInfo)) {
+      if (
+        !this.saveOriginal &&
+        this.isOriginalImage(fileInfo) &&
+        this.ghostResize
+      ) {
         log.info(
           'Cloudflare R2 Storage Adapter: save(): discarding original: ',
           fileInfo.name
@@ -499,7 +561,7 @@ export default class CloudflareR2Adapter extends StorageBase {
 
       let uuid: string | null = null;
       if (this.uuidName && !isImport) {
-        uuid = uuidv4();
+        uuid = forceUuid || uuidv4();
       }
 
       Promise.all([
@@ -530,7 +592,8 @@ export default class CloudflareR2Adapter extends StorageBase {
             () => {
               log.info('Saved', filePathR2);
               if (
-                this.isOriginalImage(fileInfo) &&
+                ((this.ghostResize && !this.isOriginalImage(fileInfo)) ||
+                  (!this.ghostResize && this.isOriginalImage(fileInfo))) &&
                 this.responsiveImages &&
                 this.storageType === StorageType.Images
               ) {
