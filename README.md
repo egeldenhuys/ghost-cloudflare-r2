@@ -20,7 +20,7 @@ mkdir -p content/adapters/storage
 cd content/adapters/storage
 git clone https://github.com/egeldenhuys/ghost-cloudflare-r2
 cd ghost-cloudflare-r2
-git checkout v1.0.0
+git checkout v0.1.0
 ```
 
 ### Install using npm
