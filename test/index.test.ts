@@ -17,7 +17,7 @@ async function generateImage(
   width: number,
   height: number,
   filePath: string,
-  mimeType?: string
+  mimeType = 'image/jpeg'
 ) {
   const buffer = Buffer.alloc(width * height * 3);
 
