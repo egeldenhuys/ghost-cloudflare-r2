@@ -4,6 +4,11 @@ import {execSync} from 'child_process';
 import sharp from 'sharp';
 import {v4 as uuidv4} from 'uuid';
 import * as fs from 'fs';
+import {
+  HeadObjectCommand,
+  HeadObjectCommandOutput,
+  S3Client,
+} from '@aws-sdk/client-s3';
 
 function randomColorComponent() {
   return Math.floor(Math.random() * 256);
@@ -87,24 +92,42 @@ process.env.GHOST_STORAGE_ADAPTER_R2_SECRET_ACCESS_KEY =
 process.env.GHOST_STORAGE_ADAPTER_R2_BUCKET = 'test-bucket';
 process.env.GHOST_STORAGE_ADAPTER_R2_DOMAIN = 'https://cdn.example.com';
 
+function setDefaultEnvVariables() {
+  process.env.GHOST_STORAGE_ADAPTER_R2_UUID_NAME = 'false';
+  process.env.GHOST_STORAGE_ADAPTER_R2_IMAGES_URL_PREFIX = '/content/images/';
+  process.env.GHOST_STORAGE_ADAPTER_R2_MEDIA_URL_PREFIX = '/content/media/';
+  process.env.GHOST_STORAGE_ADAPTER_R2_FILES_URL_PREFIX = '/content/files/';
+  process.env.GHOST_STORAGE_ADAPTER_R2_CONTENT_PREFIX = '';
+  process.env.GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE = 'true';
+  process.env.GHOST_STORAGE_ADAPTER_R2_RESPONSIVE_IMAGES = 'false';
+  process.env.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL = 'true';
+  process.env.GHOST_STORAGE_ADAPTER_R2_RESIZE_WIDTHS =
+    '300,600,1000,1600,400,750,960,1140,1200';
+  process.env.GHOST_STORAGE_ADAPTER_R2_RESIZE_JPEG_QUALITY = '80';
+  process.env.GHOST_STORAGE_ADAPTER_R2_LOG_LEVEL = 'info';
+  process.env.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIG_NAME_METADATA = 'false';
+}
+
+let S3 = new S3Client({
+  region: 'auto',
+  endpoint: process.env.GHOST_STORAGE_ADAPTER_R2_ENDPOINT,
+  credentials: {
+    accessKeyId: process.env.GHOST_STORAGE_ADAPTER_R2_ACCESS_KEY_ID || '',
+    secretAccessKey:
+      process.env.GHOST_STORAGE_ADAPTER_R2_SECRET_ACCESS_KEY || '',
+  },
+});
+
 describe('post: save(): imageOptimization__resize: false', () => {
+  beforeAll(() => {});
+
   beforeEach(() => {
     process.env.GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE = 'false';
     contentPrefix = '/test_' + makeid(12);
   });
 
   afterEach(() => {
-    // Restore defaults
-    process.env.GHOST_STORAGE_ADAPTER_R2_IMAGES_URL_PREFIX = '/content/images/';
-    process.env.GHOST_STORAGE_ADAPTER_R2_MEDIA_URL_PREFIX = '/content/media/';
-    process.env.GHOST_STORAGE_ADAPTER_R2_FILES_URL_PREFIX = '/content/files/';
-    process.env.GHOST_STORAGE_ADAPTER_R2_RESPONSIVE_IMAGES = 'false';
-    process.env.GHOST_STORAGE_ADAPTER_R2_RESIZE_JPEG_QUALITY = '80';
-    process.env.GHOST_STORAGE_ADAPTER_R2_RESIZE_WIDTHS =
-      '300,600,1000,1600,400,750,960,1140,1200';
-    process.env.GHOST_STORAGE_ADAPTER_R2_UUID_NAME = 'false';
-    process.env.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL = 'true';
-    process.env.GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE = 'true';
+    setDefaultEnvVariables();
   });
 
   test('save() single:', async () => {
@@ -144,6 +167,58 @@ describe('post: save(): imageOptimization__resize: false', () => {
     await expect(
       adapter.exists(`${contentPrefix}/content/images/${yearMonth}/snake.jpg`)
     ).resolves.toBe(true);
+  });
+
+  test('save() single: SAVE_ORIG_NAME_METADATA: true', async () => {
+    process.env.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIG_NAME_METADATA = 'true';
+
+    const adapter = new CloudflareR2Adapter({
+      GHOST_STORAGE_ADAPTER_R2_CONTENT_PREFIX: contentPrefix,
+    });
+
+    const fileName = makeid(32);
+    const filePath = `/tmp/${fileName}`;
+    await generateImage(100, 100, filePath);
+
+    await expect(
+      adapter.exists(contentPrefix + `/content/images/${yearMonth}/snake.jpg`)
+    ).resolves.toBe(false);
+
+    await expect(
+      adapter.save(
+        {
+          fieldname: 'file',
+          originalname: 'snake.jpg',
+          encoding: '7bit',
+          mimetype: 'image/jpeg',
+          destination: '/tmp',
+          filename: fileName,
+          path: filePath,
+          size: -1,
+          name: 'snake.jpg',
+          type: 'image/jpeg',
+          ext: '.jpg',
+        },
+        undefined
+      )
+    ).resolves.toBe(
+      `https://cdn.example.com${contentPrefix}/content/images/${yearMonth}/snake.jpg`
+    );
+
+    await expect(
+      adapter.exists(`${contentPrefix}/content/images/${yearMonth}/snake.jpg`)
+    ).resolves.toBe(true);
+
+    const headObj$ = S3.send(
+      new HeadObjectCommand({
+        Bucket: process.env.GHOST_STORAGE_ADAPTER_R2_BUCKET || '',
+        Key: `${contentPrefix}/content/images/${yearMonth}/snake.jpg`,
+      })
+    );
+
+    const headObj: HeadObjectCommandOutput = await headObj$;
+    expect(headObj).toBeTruthy();
+    expect(headObj.Metadata?.original_name).toBe('snake.jpg');
   });
 
   test('save() single: png', async () => {
@@ -187,6 +262,7 @@ describe('post: save(): imageOptimization__resize: false', () => {
 
   test('save() single: UUID_NAME: true', async () => {
     process.env.GHOST_STORAGE_ADAPTER_R2_UUID_NAME = 'true';
+    process.env.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIG_NAME_METADATA = 'true';
 
     const adapter = new CloudflareR2Adapter({
       GHOST_STORAGE_ADAPTER_R2_CONTENT_PREFIX: contentPrefix,
@@ -227,6 +303,17 @@ describe('post: save(): imageOptimization__resize: false', () => {
     await expect(
       adapter.exists(`${contentPrefix}/content/images/${yearMonth}/${uuid}.jpg`)
     ).resolves.toBe(true);
+
+    const headObj$ = S3.send(
+      new HeadObjectCommand({
+        Bucket: process.env.GHOST_STORAGE_ADAPTER_R2_BUCKET || '',
+        Key: `${contentPrefix}/content/images/${yearMonth}/${uuid}.jpg`,
+      })
+    );
+
+    const headObj: HeadObjectCommandOutput = await headObj$;
+    expect(headObj).toBeTruthy();
+    expect(headObj.Metadata?.original_name).toBe(`snake.jpg`);
   });
 
   test('save() single: SAVE_ORIGINAL: false', async () => {
@@ -534,20 +621,12 @@ describe('post: save(): imageOptimization__resize: true', () => {
   });
 
   afterEach(() => {
-    // Restore defaults
-    process.env.GHOST_STORAGE_ADAPTER_R2_IMAGES_URL_PREFIX = '/content/images/';
-    process.env.GHOST_STORAGE_ADAPTER_R2_MEDIA_URL_PREFIX = '/content/media/';
-    process.env.GHOST_STORAGE_ADAPTER_R2_FILES_URL_PREFIX = '/content/files/';
-    process.env.GHOST_STORAGE_ADAPTER_R2_RESPONSIVE_IMAGES = 'false';
-    process.env.GHOST_STORAGE_ADAPTER_R2_RESIZE_JPEG_QUALITY = '80';
-    process.env.GHOST_STORAGE_ADAPTER_R2_RESIZE_WIDTHS =
-      '300,600,1000,1600,400,750,960,1140,1200';
-    process.env.GHOST_STORAGE_ADAPTER_R2_UUID_NAME = 'false';
-    process.env.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL = 'true';
-    process.env.GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE = 'true';
+    setDefaultEnvVariables();
   });
 
   test('save() single:', async () => {
+    process.env.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIG_NAME_METADATA = 'true';
+
     const adapter = new CloudflareR2Adapter({
       GHOST_STORAGE_ADAPTER_R2_CONTENT_PREFIX: contentPrefix,
     });
@@ -590,6 +669,17 @@ describe('post: save(): imageOptimization__resize: true', () => {
       adapter.exists(`${contentPrefix}/content/images/${yearMonth}/snake.jpg`)
     ).resolves.toBe(true);
 
+    const headObj$ = S3.send(
+      new HeadObjectCommand({
+        Bucket: process.env.GHOST_STORAGE_ADAPTER_R2_BUCKET || '',
+        Key: `${contentPrefix}/content/images/${yearMonth}/snake.jpg`,
+      })
+    );
+
+    const headObj: HeadObjectCommandOutput = await headObj$;
+    expect(headObj).toBeTruthy();
+    expect(headObj.Metadata?.original_name).toBe(`snake.jpg`);
+
     // Original image
     await expect(
       adapter.save(
@@ -615,6 +705,17 @@ describe('post: save(): imageOptimization__resize: true', () => {
     await expect(
       adapter.exists(`${contentPrefix}/content/images/${yearMonth}/snake_o.jpg`)
     ).resolves.toBe(true);
+
+    const headObj2$ = S3.send(
+      new HeadObjectCommand({
+        Bucket: process.env.GHOST_STORAGE_ADAPTER_R2_BUCKET || '',
+        Key: `${contentPrefix}/content/images/${yearMonth}/snake_o.jpg`,
+      })
+    );
+
+    const headObj2: HeadObjectCommandOutput = await headObj2$;
+    expect(headObj2).toBeTruthy();
+    expect(headObj2.Metadata?.original_name).toBe(`snake.jpg`);
   });
 
   test('save() single: UUID_NAME: true', async () => {
@@ -1085,17 +1186,7 @@ describe('import: save(): imageOptimization__resize: false', () => {
   });
 
   afterEach(() => {
-    // Restore defaults
-    process.env.GHOST_STORAGE_ADAPTER_R2_IMAGES_URL_PREFIX = '/content/images/';
-    process.env.GHOST_STORAGE_ADAPTER_R2_MEDIA_URL_PREFIX = '/content/media/';
-    process.env.GHOST_STORAGE_ADAPTER_R2_FILES_URL_PREFIX = '/content/files/';
-    process.env.GHOST_STORAGE_ADAPTER_R2_RESPONSIVE_IMAGES = 'false';
-    process.env.GHOST_STORAGE_ADAPTER_R2_RESIZE_JPEG_QUALITY = '80';
-    process.env.GHOST_STORAGE_ADAPTER_R2_RESIZE_WIDTHS =
-      '300,600,1000,1600,400,750,960,1140,1200';
-    process.env.GHOST_STORAGE_ADAPTER_R2_UUID_NAME = 'false';
-    process.env.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL = 'true';
-    process.env.GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE = 'true';
+    setDefaultEnvVariables();
   });
 
   test('save() single:', async () => {
@@ -1130,6 +1221,53 @@ describe('import: save(): imageOptimization__resize: false', () => {
     await expect(
       adapter.exists(`${contentPrefix}/content/images/2022/12/${fileName}.jpg`)
     ).resolves.toBe(true);
+  });
+
+  test('save() single: SAVE_ORIG_NAME_METADATA: true', async () => {
+    process.env.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIG_NAME_METADATA = 'true';
+
+    const adapter = new CloudflareR2Adapter({
+      GHOST_STORAGE_ADAPTER_R2_CONTENT_PREFIX: contentPrefix,
+    });
+
+    const fileName = makeid(32);
+    const filePath = `/tmp/${uuidv4()}/content/images/2022/12/${fileName}.jpg`;
+    await generateImage(100, 100, filePath);
+
+    await expect(
+      adapter.exists(contentPrefix + `/content/images/2022/12/${fileName}.jpg`)
+    ).resolves.toBe(false);
+
+    await expect(
+      adapter.save(
+        {
+          name: `2022/12/${fileName}.jpg`,
+          path: filePath,
+          originalPath: `content/images/2022/12/${fileName}.jpg`,
+          targetDir: '/var/lib/ghost/content/images/2022/12',
+          newPath: `/content/images/2022/12/${fileName}.jpg`,
+          type: '',
+        },
+        '/var/lib/ghost/content/images/2022/12'
+      )
+    ).resolves.toBe(
+      `https://cdn.example.com${contentPrefix}/content/images/2022/12/${fileName}.jpg`
+    );
+
+    await expect(
+      adapter.exists(`${contentPrefix}/content/images/2022/12/${fileName}.jpg`)
+    ).resolves.toBe(true);
+
+    const headObj$ = S3.send(
+      new HeadObjectCommand({
+        Bucket: process.env.GHOST_STORAGE_ADAPTER_R2_BUCKET || '',
+        Key: `${contentPrefix}/content/images/2022/12/${fileName}.jpg`,
+      })
+    );
+
+    const headObj: HeadObjectCommandOutput = await headObj$;
+    expect(headObj).toBeTruthy();
+    expect(headObj.Metadata?.original_name).toBe(`${fileName}.jpg`);
   });
 
   test('save() single: RESPONSIVE_IMAGES: true', async () => {
@@ -1258,17 +1396,7 @@ describe('import: save(): imageOptimization__resize: true', () => {
   });
 
   afterEach(() => {
-    // Restore defaults
-    process.env.GHOST_STORAGE_ADAPTER_R2_IMAGES_URL_PREFIX = '/content/images/';
-    process.env.GHOST_STORAGE_ADAPTER_R2_MEDIA_URL_PREFIX = '/content/media/';
-    process.env.GHOST_STORAGE_ADAPTER_R2_FILES_URL_PREFIX = '/content/files/';
-    process.env.GHOST_STORAGE_ADAPTER_R2_RESPONSIVE_IMAGES = 'false';
-    process.env.GHOST_STORAGE_ADAPTER_R2_RESIZE_JPEG_QUALITY = '80';
-    process.env.GHOST_STORAGE_ADAPTER_R2_RESIZE_WIDTHS =
-      '300,600,1000,1600,400,750,960,1140,1200';
-    process.env.GHOST_STORAGE_ADAPTER_R2_UUID_NAME = 'false';
-    process.env.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL = 'true';
-    process.env.GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE = 'true';
+    setDefaultEnvVariables();
   });
 
   test('save() single:', async () => {

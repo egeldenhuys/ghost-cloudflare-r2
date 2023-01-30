@@ -97,6 +97,22 @@ interface Config {
   GHOST_STORAGE_ADAPTER_R2_RESIZE_JPEG_QUALITY?: number;
   GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL?: boolean;
   GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE?: boolean;
+  GHOST_STORAGE_ADAPTER_R2_SAVE_ORIG_NAME_METADATA?: boolean;
+}
+
+function getBooleanFromEnv(envName: string): boolean | undefined {
+  let result: boolean | undefined;
+  if (process.env[envName] && process.env[envName] === 'true') {
+    result = true;
+  } else if (process.env[envName] && process.env[envName] === 'false') {
+    result = false;
+  } else if (process.env[envName]) {
+    throw new Error(
+      `Environment variable ${envName} contains invalid value ${process.env[envName]}`
+    );
+  }
+
+  return result;
 }
 
 function mergeConfigWithEnv(config: Config): Config {
@@ -138,13 +154,9 @@ function mergeConfigWithEnv(config: Config): Config {
     config.GHOST_STORAGE_ADAPTER_R2_FILES_URL_PREFIX ||
     '/content/files/';
 
-  let responsiveImages: boolean | undefined;
-  if (
-    process.env.GHOST_STORAGE_ADAPTER_R2_RESPONSIVE_IMAGES &&
-    process.env.GHOST_STORAGE_ADAPTER_R2_RESPONSIVE_IMAGES === 'true'
-  ) {
-    responsiveImages = true;
-  }
+  const responsiveImages: boolean | undefined = getBooleanFromEnv(
+    'GHOST_STORAGE_ADAPTER_R2_RESPONSIVE_IMAGES'
+  );
   config.GHOST_STORAGE_ADAPTER_R2_RESPONSIVE_IMAGES =
     responsiveImages ||
     config.GHOST_STORAGE_ADAPTER_R2_RESPONSIVE_IMAGES ||
@@ -155,23 +167,9 @@ function mergeConfigWithEnv(config: Config): Config {
     config.GHOST_STORAGE_ADAPTER_R2_RESIZE_WIDTHS ||
     '300,600,1000,1600,400,750,960,1140,1200';
 
-  let uuidName: boolean | undefined;
-  if (
-    process.env.GHOST_STORAGE_ADAPTER_R2_UUID_NAME &&
-    process.env.GHOST_STORAGE_ADAPTER_R2_UUID_NAME === 'true'
-  ) {
-    uuidName = true;
-  } else if (
-    process.env.GHOST_STORAGE_ADAPTER_R2_UUID_NAME &&
-    process.env.GHOST_STORAGE_ADAPTER_R2_UUID_NAME === 'false'
-  ) {
-    uuidName = false;
-  } else if (process.env.GHOST_STORAGE_ADAPTER_R2_UUID_NAME) {
-    throw new Error(
-      `Environment variable GHOST_STORAGE_ADAPTER_R2_UUID_NAME contains invalid value ${process.env.GHOST_STORAGE_ADAPTER_R2_UUID_NAME}`
-    );
-  }
-
+  const uuidName: boolean | undefined = getBooleanFromEnv(
+    'GHOST_STORAGE_ADAPTER_R2_UUID_NAME'
+  );
   config.GHOST_STORAGE_ADAPTER_R2_UUID_NAME =
     uuidName ?? (config.GHOST_STORAGE_ADAPTER_R2_UUID_NAME || false);
 
@@ -184,45 +182,27 @@ function mergeConfigWithEnv(config: Config): Config {
   config.GHOST_STORAGE_ADAPTER_R2_RESIZE_JPEG_QUALITY =
     jpegQuality || config.GHOST_STORAGE_ADAPTER_R2_RESIZE_JPEG_QUALITY || 80;
 
-  let saveOriginal: boolean | undefined;
-  if (
-    process.env.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL &&
-    process.env.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL === 'true'
-  ) {
-    saveOriginal = true;
-  } else if (
-    process.env.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL &&
-    process.env.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL === 'false'
-  ) {
-    saveOriginal = false;
-  } else if (process.env.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL) {
-    throw new Error(
-      `Environment variable GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL contains invalid value ${process.env.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL}`
-    );
-  }
-
+  const saveOriginal: boolean | undefined = getBooleanFromEnv(
+    'GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL'
+  );
   config.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL =
     saveOriginal ?? (config.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL || true);
 
-  let ghostResize: boolean | undefined;
-  if (
-    process.env.GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE &&
-    process.env.GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE === 'true'
-  ) {
-    ghostResize = true;
-  } else if (
-    process.env.GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE &&
-    process.env.GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE === 'false'
-  ) {
-    ghostResize = false;
-  } else if (process.env.GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE) {
-    throw new Error(
-      `Environment variable GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE contains invalid value ${process.env.GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE}`
-    );
-  }
-
+  const ghostResize: boolean | undefined = getBooleanFromEnv(
+    'GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE'
+  );
   config.GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE =
     ghostResize ?? (config.GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE || true);
+
+  const saveNameMetadata: boolean | undefined = getBooleanFromEnv(
+    'GHOST_STORAGE_ADAPTER_R2_SAVE_ORIG_NAME_METADATA'
+  );
+  config.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIG_NAME_METADATA =
+    saveNameMetadata || false;
+
+  config.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIG_NAME_METADATA =
+    saveNameMetadata ??
+    (config.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIG_NAME_METADATA || false);
 
   return config;
 }
@@ -272,6 +252,7 @@ export default class CloudflareR2Adapter extends StorageBase {
   private jpegQuality: number | undefined;
   private ghostResize: boolean;
   private contentPrefix: string;
+  private saveOrigNameMetadata: boolean;
 
   constructor(config: Config = {}) {
     log.debug('Initialising ghost-cloudflare-r2 storage adapter');
@@ -329,6 +310,9 @@ export default class CloudflareR2Adapter extends StorageBase {
     this.uuidName = <boolean>config.GHOST_STORAGE_ADAPTER_R2_UUID_NAME;
     this.saveOriginal = <boolean>config.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL;
     this.ghostResize = <boolean>config.GHOST_STORAGE_ADAPTER_R2_GHOST_RESIZE;
+    this.saveOrigNameMetadata = <boolean>(
+      config.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIG_NAME_METADATA
+    );
 
     log.info(
       'Cloudflare R2 Storage Adapter: handling',
@@ -613,6 +597,20 @@ export default class CloudflareR2Adapter extends StorageBase {
             'Cloudflare R2 Storage Adapter: save(): saving',
             filePathR2
           );
+
+          let metadata = {};
+          if (this.saveOrigNameMetadata) {
+            if (isImport) {
+              metadata = {original_name: path.basename(fileInfo.name)};
+            } else {
+              if (fileInfo.originalname === undefined) {
+                throw new Error(
+                  'save(): originalname is not defined for non import, could not save original name metadata'
+                );
+              }
+              metadata = {original_name: path.basename(fileInfo.originalname)};
+            }
+          }
           this.S3.send(
             new PutObjectCommand({
               Bucket: this.bucket,
@@ -620,6 +618,7 @@ export default class CloudflareR2Adapter extends StorageBase {
               ContentType: fileInfo.type,
               CacheControl: `max-age=${30 * 24 * 60 * 60}`,
               Key: stripLeadingSlash(filePathR2),
+              Metadata: metadata,
             })
           ).then(
             () => {
