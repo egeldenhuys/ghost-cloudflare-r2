@@ -28,5 +28,28 @@
     "mime": "^3.0.0",
     "sharp": "^0.31.3",
     "uuid": "^9.0.0"
-  }
+  },
+  "types": "./index.d.ts",
+  "name": "ghost-cloudflare-r2",
+  "description": "Cloudflare R2 storage adapter for Ghost",
+  "version": "0.0.1",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/egeldenhuys/ghost-cloudflare-r2.git"
+  },
+  "keywords": [
+    "ghost",
+    "clourflare-r2",
+    "ghost-storage-adapter"
+  ],
+  "author": "Evert Geldenhuys",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/egeldenhuys/ghost-cloudflare-r2/issues"
+  },
+  "homepage": "https://github.com/egeldenhuys/ghost-cloudflare-r2#readme"
 }
