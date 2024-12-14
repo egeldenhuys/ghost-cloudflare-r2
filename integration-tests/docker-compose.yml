@@ -25,7 +25,7 @@ services:
       "
 
   ghost:
-    image: docker.io/ghost:5-alpine
+    image: docker.io/ghost:5.94
     restart: always
     ports:
       - 8080:2368

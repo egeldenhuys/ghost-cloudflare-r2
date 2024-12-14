@@ -11,3 +11,9 @@ TODO:
 - Create post
 - Upload things
 - Check if they can be fetched
+
+## Usage
+```
+docker-compose up -d
+./tests.sh
+```
