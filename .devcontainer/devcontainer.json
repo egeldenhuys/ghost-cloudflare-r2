@@ -1,24 +1,30 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/typescript-node
 {
-	// For Podman and Selinux
-	"runArgs": [
-		"--userns=keep-id"
-	  ],
-	"containerEnv": {
-		"HOME": "/home/node"
-	},
-	"name": "Node.js & TypeScript",
+	// These settings are for running rootful podman in the container, from a rootless podman on the host
+	// https://www.redhat.com/en/blog/podman-inside-container
+	"name": "Podman with Typescript",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/typescript-node:18",
-	// "build": { "dockerfile": "Dockerfile" }
+	// "image": "quay.io/podman/stable",
+	"build": { "dockerfile": "Dockerfile" },
+	"runArgs": [
+		"--privileged"
+		// Still get errors with the below, use --privileged instead
+		// "--security-opt=label=disable", // Instead of --privileged
+		// "--device=/dev/fuse", // Instead of --privileged
+		// "--cap-add=sys_admin,mknod,NET_ADMIN" // Instead of --privileged
+	  ],
+	// Mount .devcontainer/containers into the container to cache images pulled within the container
+	"mounts": [
+    	"source=${localWorkspaceFolder}/.devcontainer/containers,target=/var/lib/containers,type=bind,consistency=cached"
+	]
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
-	"features": {
-		"ghcr.io/devcontainers-contrib/features/npm-package:1": {
-			"package": "ghost-cli"
-		}
-	}
+	// "features": {
+	// 	"ghcr.io/devcontainers-contrib/features/npm-package:1": {
+	// 		"package": "ghost-cli"
+	// 	}
+	// }
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
