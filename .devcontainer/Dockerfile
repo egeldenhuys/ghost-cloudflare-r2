@@ -16,3 +16,5 @@ RUN npm install -g ghost-cli@latest
 
 RUN dnf install -y git
 RUN dnf install -y podman-compose
+
+RUN ln -fs /usr/bin/npx-${DNF_NODE_VERSION} /usr/bin/npx
