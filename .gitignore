@@ -4,3 +4,10 @@ node_modules/
 index.js
 index.d.ts
 index.js.map
+
+# For building in docker
+npm_cache/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

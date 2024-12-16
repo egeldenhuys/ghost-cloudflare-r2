@@ -1,0 +1,42 @@
+version: '3.9'
+
+services:
+  # minio server service
+  minio-server:
+    image: docker.io/minio/minio
+    ports:
+      - "9000:9000" # API
+      - "9001:9001" # Console
+    environment:
+      MINIO_ACCESS_KEY: TEST_MINIO_ACCESS_KEY
+      MINIO_SECRET_KEY: TEST_MINIO_SECRET_KEY
+    command: server /data --console-address ":9001"
+
+  createbuckets:
+    image: docker.io/minio/mc
+    depends_on:
+      - minio-server
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc config host add myminio http://minio-server:9000 TEST_MINIO_ACCESS_KEY TEST_MINIO_SECRET_KEY;
+      /usr/bin/mc rb --force myminio/test-bucket;
+      /usr/bin/mc mb myminio/test-bucket;
+      exit 0;
+      "
+
+  ghost:
+    image: docker.io/ghost:5.94
+    restart: always
+    ports:
+      - 8080:2368
+    environment:
+      # see https://ghost.org/docs/config/#configuration-options
+      database__client: sqlite3
+      database__connection__filename: "content/data/ghost-test.db"
+      database__useNullAsDefault: true
+      database__debug: false
+      # this url value is just an example, and is likely wrong for your environment!
+      url: http://localhost:8080
+      # contrary to the default mentioned in the linked documentation, this image defaults to NODE_ENV=production (so development mode needs to be explicitly specified if desired)
+      NODE_ENV: development
+    depends_on: minio-server

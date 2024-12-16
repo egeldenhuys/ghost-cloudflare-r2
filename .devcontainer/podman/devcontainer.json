@@ -3,7 +3,7 @@
 {
 	// These settings are for running rootful podman in the container, from a rootless podman on the host
 	// https://www.redhat.com/en/blog/podman-inside-container
-	"name": "Podman with Typescript",
+	"name": "Podman",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
 	// "image": "quay.io/podman/stable",
 	"build": { "dockerfile": "Dockerfile" },
@@ -18,6 +18,8 @@
 	"mounts": [
     	"source=${localWorkspaceFolder}/.devcontainer/containers,target=/var/lib/containers,type=bind,consistency=cached"
 	]
+	// Extensions:
+	// ms-playwright.playwright
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {
