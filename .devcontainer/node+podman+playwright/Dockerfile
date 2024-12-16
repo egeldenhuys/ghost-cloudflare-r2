@@ -10,5 +10,8 @@ RUN npm install -g ghost-cli@latest
 RUN npx -y playwright@1.49.1 install --with-deps
 RUN apt-get -y install podman-compose
 
+# For generating a random video
+RUN apt-get -y install ffmpeg
+
 VOLUME /var/lib/containers
 
