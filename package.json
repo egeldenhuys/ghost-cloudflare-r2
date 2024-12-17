@@ -1,6 +1,5 @@
 {
   "devDependencies": {
-    "@playwright/test": "^1.49.1",
     "@types/express-serve-static-core": "^4.17.33",
     "@types/ghost-storage-base": "^0.0.4",
     "@types/jest": "^29.4.0",
