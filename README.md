@@ -137,3 +137,12 @@ a local instance for testing.
 Also note that the tests will generate random images in `/tmp`.
 
 The tests can be refactored and improved.
+
+## Development
+To use the devcontainer in vscode, the following dependencies are required:
+- `Podman`
+
+The `.devcontainer/containers` directory will be used to cache images that are pulled within the container.
+
+Need to use firefox since chromium cannot upload videos correctly due to missing codecs:
+`npx playwright codegen http://127.0.0.1:8080 -b firefox`

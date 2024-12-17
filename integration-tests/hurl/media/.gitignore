@@ -1,0 +1,4 @@
+# Don't need to bloat the repo size with random images
+*.png
+*.jpg
+*.mp4

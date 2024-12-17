@@ -1,0 +1,46 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/typescript-node
+{
+	// These settings are for running rootful podman in the container, from a rootless podman on the host
+	// https://www.redhat.com/en/blog/podman-inside-container
+	"name": "Node+Podman+Playwright",
+	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+	// "image": "quay.io/podman/stable",
+	"build": { "dockerfile": "Dockerfile" },
+	"runArgs": [
+		"--privileged"
+		// Still get errors with the below, use --privileged instead
+		// "--security-opt=label=disable", // Instead of --privileged
+		// "--device=/dev/fuse", // Instead of --privileged
+		// "--cap-add=sys_admin,mknod,NET_ADMIN" // Instead of --privileged
+	  ],
+	// Mount .devcontainer/containers into the container to cache images pulled within the container
+	"mounts": [
+    	"source=${localWorkspaceFolder}/.devcontainer/containers,target=/var/lib/containers,type=bind,consistency=cached"
+	],
+	"containerEnv": {
+    	"npm_config_cache": "/workspaces/${localWorkspaceFolderBasename}/.devcontainer/npm_cache"
+	},
+	// Extensions:
+	// ms-playwright.playwright
+	// JacobPfeifer.pfeifer-hurl
+
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	// "features": {
+	// 	"ghcr.io/devcontainers-contrib/features/npm-package:1": {
+	// 		"package": "ghost-cli"
+	// 	}
+	// }
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+
+	// Use 'postCreateCommand' to run commands after the container is created.
+	// "postCreateCommand": "yarn install",
+
+	// Configure tool-specific properties.
+	// "customizations": {},
+
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "root"
+}
