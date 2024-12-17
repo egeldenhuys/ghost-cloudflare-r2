@@ -1,5 +1,9 @@
 # Create admin account and setup blog
+# Attempts to init the blog until 403 is returned, meaning blog has been configured
 POST http://{{host}}/ghost/api/admin/authentication/setup
+[Options]
+retry: 30
+retry-interval: 1000ms
 {
     "setup": [
         {
@@ -10,5 +14,5 @@ POST http://{{host}}/ghost/api/admin/authentication/setup
         }
     ]
 }
-HTTP *
+HTTP 403
 [Asserts]

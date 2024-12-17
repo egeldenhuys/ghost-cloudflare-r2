@@ -9,21 +9,20 @@ HTTP 201
 [Captures]
 session_cookie: cookie "ghost-admin-api-session"
 
-# https://ghost.org/docs/admin-api/#images
-POST http://{{host}}/ghost/api/admin/images/upload
+# Undocumented...
+POST http://{{host}}/ghost/api/admin/files/upload
 [Options]
 verbose: false
 [Cookies]
 ghost-admin-api-session: {{session_cookie}}
 [MultipartFormData]
-file: file,media/random.png;
-purpose: image
-ref: test-ref
+file: file,media/generate.sh; application/x-shellscript
 HTTP 201
 [Captures]
-image-url: jsonpath "$.images[0].url"
+file-url: jsonpath "$.files[0].url"
 
-GET {{image-url}}
+GET {{file-url}}
 HTTP 200
 [Asserts]
-header "Content-Type" contains "image"
+header "Content-Type" contains "application/x-sh"
+

@@ -23,6 +23,7 @@
 	},
 	// Extensions:
 	// ms-playwright.playwright
+	// JacobPfeifer.pfeifer-hurl
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {
