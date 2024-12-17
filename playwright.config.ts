@@ -36,21 +36,24 @@ export default defineConfig({
   projects: [
     {
       name: 'init',
-      testMatch: /00-init\.spec\.ts/,
+      testMatch: /.*00-init\.spec\.ts/,
     },
-    { name: 'setup', testMatch: /.*\.setup\.ts/, dependencies: ['init'],},
+    { name: 'setup', testMatch: /.*\.setup\.ts/},
+    // {
+    //   name: 'chromium',
+    //   use: { ...devices['Desktop Chrome'],
+    //     storageState: 'playwright/.auth/user.json',
+    //   },
+    //   dependencies: ['setup'],
+    // },
+
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'],
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'],
         storageState: 'playwright/.auth/user.json',
-      },
+       },
       dependencies: ['setup'],
     },
-
-    // {
-    //   name: 'firefox',
-    //   use: { ...devices['Desktop Firefox'] },
-    // },
 
     // {
     //   name: 'webkit',

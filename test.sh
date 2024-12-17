@@ -5,6 +5,13 @@ set -e
 cd e2e/
 podman-compose down
 podman-compose up -d
-npx playwright test --workers=1
-# podman-compose down
+
+cd images
+./generate.sh
+cd ..
+cd ..
+npx playwright test --workers=1 --ui --ui-host=0.0.0.0
+
+cd e2e/
+podman-compose down
 cd ..

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { USERNAME, PASSWORD, SITE_NAME } from './test-config';
+import { USERNAME, PASSWORD, SITE_NAME, HOST } from './test-config';
 
 test('Setup Blog', async ({ page }) => {
 
@@ -7,7 +7,7 @@ test('Setup Blog', async ({ page }) => {
         try {
             await page.waitForTimeout(1000);
 
-            await page.goto('http://127.0.0.1:8080/ghost/#/setup');
+            await page.goto(`http://${HOST}/ghost/#/setup`);
     
             while (! ((await page.getByRole('heading').textContent())?.includes("Welcome to Ghost."))) {
                 const header = await page.getByRole('heading').textContent() || ""
