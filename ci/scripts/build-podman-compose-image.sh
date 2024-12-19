@@ -23,7 +23,7 @@ ls -al $PODMAN_ROOT
 podman --root=$PODMAN_ROOT --storage-driver=$PODMAN_STORAGE_DRIVER load -i podman-base-image/image.tar
 podman --root=$PODMAN_ROOT --storage-driver=$PODMAN_STORAGE_DRIVER images
 
-podman --root=$PODMAN_ROOT --storage-driver=$PODMAN_STORAGE_DRIVER $CACHE_COMMANDS build -f ghost-cloudflare-r2/ci/images/podman-compose/Dockerfile -t localhost/podman-compose ghost-cloudflare-r2/ci/images/podman-compose
+podman --root=$PODMAN_ROOT --storage-driver=$PODMAN_STORAGE_DRIVER build $CACHE_COMMANDS -f ghost-cloudflare-r2/ci/images/podman-compose/Dockerfile -t localhost/podman-compose ghost-cloudflare-r2/ci/images/podman-compose
 
 podman --root=$PODMAN_ROOT --storage-driver=$PODMAN_STORAGE_DRIVER images
 
