@@ -14,8 +14,9 @@ inputs:
 outputs:
 - name: image
 
-caches:
-    - path: cache
+# works with vfs driver, but concourse is slow to save the cache
+# caches:
+#     - path: cache
 
 run:
 #   path: build
