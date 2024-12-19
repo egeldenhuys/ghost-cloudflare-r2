@@ -18,4 +18,7 @@ cd ghost-cloudflare-r2/integration-tests
 
 podman-compose up -d
 ./test.sh
-podman-compose down
+RES=$?
+#podman-compose down
+
+exit $RES

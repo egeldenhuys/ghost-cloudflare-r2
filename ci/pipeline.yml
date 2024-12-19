@@ -82,15 +82,6 @@ jobs:
     privileged: true
     image: podman-compose-image
     file: ghost-cloudflare-r2/ci/tasks/integration-tests.yml
-    ensure:
-      task: cleanup
-      image: podman-compose-image
-      config:
-        platform: linux
-        run:
-          path: "podman-compose"
-          args: ["down"]
-          dir: "ghost-cloudflare-r2/integration-tests"
 
   # - task: unit-tests
   #   image: node-image
