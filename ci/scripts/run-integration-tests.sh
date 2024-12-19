@@ -15,8 +15,7 @@ podman images
 
 cd ghost-cloudflare-r2/integration-tests
 # TODO: add to image
-# dnf install -y podman-compose
-pip3 install podman-compose
+
 podman-compose up -d
 ./test.sh
 podman-compose down

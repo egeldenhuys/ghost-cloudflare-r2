@@ -2,6 +2,7 @@
 platform: linux
 
 # image: podman-compose-image
+
 # image_resource:
 #   type: registry-image
 #   source:

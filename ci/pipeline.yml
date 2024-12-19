@@ -44,14 +44,28 @@ resources:
 #     tag: 20
 
 jobs:
+- name: build-podman-compose-image
+  plan:
+    - get: ghost-cloudflare-r2
+    - get: podman-base-image
+      params: {format: oci}
+
+    - task: build-image
+      privileged: true
+      file: ghost-cloudflare-r2/ci/tasks/build-podman-compose-image.yml
+
+    - put: podman-compose-image
+      params:
+        image: image/image.tar
+        version: latest
+
 - name: npm-install
-  public: false
   plan:
   # - get: node-image
   - get: ghost-cloudflare-r2
     trigger: true
   - task: npm-install
-    file: ci/tasks/npm-install.yml
+    file: ghost-cloudflare-r2/ci/tasks/npm-install.yml
 
 - name: integration-tests-job
   plan:
@@ -62,20 +76,12 @@ jobs:
     params: {format: oci}
   - get: hurl-image
     params: {format: oci}
-  - get: podman-base-image
-    params: {format: oci}
-
-  - task: build-podman-compose-image
-    file: ci/tasks/build-podman-compose-image.yml
-    output_mapping: {image: podman-compose-image}
-  
-  - put: podman-compose-image
-    params: {image: podman-compose-image/image.tar}
+  - get: podman-compose-image
   
   - task: integration-tests-task
-    image: podman-compose-image
     privileged: true
-    file: ci/tasks/integrations-tests.yml
+    image: podman-compose-image
+    file: ghost-cloudflare-r2/ci/tasks/integrations-tests.yml
   # - task: unit-tests
   #   image: node-image
   #   config:
