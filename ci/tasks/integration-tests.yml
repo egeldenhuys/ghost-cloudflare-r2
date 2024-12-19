@@ -3,11 +3,11 @@ platform: linux
 
 # image: podman-compose-image
 
-# image_resource:
-#   type: registry-image
-#   source:
-#     repository: quay.io/podman/stable
-#     tag: latest
+image_resource:
+  type: registry-image
+  source:
+    repository: 192.168.88.20:5000/podman-compose
+    tag: latest
 
 inputs:
 - name: ghost-cloudflare-r2
