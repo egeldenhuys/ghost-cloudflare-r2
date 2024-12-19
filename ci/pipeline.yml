@@ -5,6 +5,7 @@ resources:
   icon: github
   source:
     uri: https://github.com/egeldenhuys/ghost-cloudflare-r2.git
+    branch: concourse-ci
 - name: minio-image
   type: registry-image
   icon: docker
@@ -29,6 +30,10 @@ resources:
   source:
     repository: quay.io/podman/stable
     tag: latest
+- name: podman-compose-image
+  type: registry-image
+  source:
+    repository: 192.168.88.20:5000/podman-compose
 
 # localhost:5000/oci-build-task:master-arm64
 
@@ -62,8 +67,13 @@ jobs:
 
   - task: build-podman-compose-image
     file: ci/tasks/build-podman-compose-image.yml
+    output_mapping: {image: podman-compose-image}
+  
+  - put: podman-compose-image
+    params: {image: podman-compose-image/image.tar}
   
   - task: integration-tests-task
+    image: podman-compose-image
     privileged: true
     file: ci/tasks/integrations-tests.yml
   # - task: unit-tests

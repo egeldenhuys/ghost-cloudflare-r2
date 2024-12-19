@@ -1,17 +1,19 @@
 ---
 platform: linux
 
-image_resource:
-  type: registry-image
-  source:
-    repository: quay.io/podman/stable
-    tag: latest
+# image: podman-compose-image
+# image_resource:
+#   type: registry-image
+#   source:
+#     repository: quay.io/podman/stable
+#     tag: latest
 
 inputs:
 - name: ghost-cloudflare-r2
 - name: minio-image
 - name: ghost-image
 - name: hurl-image
+- name: podman-compose-image
 
 run:
   path: ghost-cloudflare-r2/ci/scripts/run-integration-tests.sh
