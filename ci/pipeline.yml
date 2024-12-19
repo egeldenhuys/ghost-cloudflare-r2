@@ -34,6 +34,7 @@ resources:
   type: registry-image
   source:
     repository: 192.168.88.20:5000/podman-compose
+    tag: latest
 
 # localhost:5000/oci-build-task:master-arm64
 
@@ -57,7 +58,6 @@ jobs:
     - put: podman-compose-image
       params:
         image: image/image.tar
-        version: latest
 
 - name: npm-install
   plan:
@@ -77,11 +77,11 @@ jobs:
   - get: hurl-image
     params: {format: oci}
   - get: podman-compose-image
-  
+
   - task: integration-tests-task
     privileged: true
     image: podman-compose-image
-    file: ghost-cloudflare-r2/ci/tasks/integrations-tests.yml
+    file: ghost-cloudflare-r2/ci/tasks/integration-tests.yml
   # - task: unit-tests
   #   image: node-image
   #   config:

@@ -14,6 +14,9 @@ inputs:
 outputs:
 - name: image
 
+caches:
+    - path: cache
+
 run:
 #   path: build
   path: ghost-cloudflare-r2/ci/scripts/build-podman-compose-image.sh
