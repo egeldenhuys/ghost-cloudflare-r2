@@ -23,12 +23,14 @@ resources:
   source:
     repository: ghcr.io/orange-opensource/hurl
     tag: 5.0.1
-# - name: podman-base-image
-#   type: registry-image
-#   icon: docker
-#   source:
-#     repository: quay.io/podman/stable
-#     tag: latest
+- name: podman-base-image
+  type: registry-image
+  icon: docker
+  source:
+    repository: quay.io/podman/stable
+    tag: latest
+
+# localhost:5000/oci-build-task:master-arm64
 
 # - name: node-image
 #   type: registry-image
@@ -55,8 +57,8 @@ jobs:
     params: {format: oci}
   - get: hurl-image
     params: {format: oci}
-  # - get: podman-base-image
-  #   params: {format: oci}
+  - get: podman-base-image
+    params: {format: oci}
 
   - task: build-podman-compose-image
     file: ci/tasks/build-podman-compose-image.yml

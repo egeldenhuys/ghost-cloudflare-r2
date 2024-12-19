@@ -1,27 +1,31 @@
 ---
 platform: linux
 
+# Does not support arm64
+# image_resource:
+#     type: registry-image
+#     source:
+#         repository: docker.io/concourse/oci-build-task
+
 image_resource:
-    type: registry-image
-    source:
-        repository: docker.io/concourse/oci-build-task
+  type: registry-image
+  source:
+    repository: quay.io/podman/stable
+    tag: latest
 
 inputs:
 - name: ghost-cloudflare-r2
-# - name: podman-base-image
+- name: podman-base-image
 
 outputs:
 - name: podman-compose-image
 
-params:
-    CONTEXT: ghost-cloudflare-r2/ci/images/podman-compose
-    DOCKERFILE: ghost-cloudflare-r2/ci/images/podman-compose/Dockerfile
-    UNPACK_ROOTFS: true #add this param
-
 run:
 #   path: build
-  path: ls
-  args: ["-al"]
+  path: ghost-cloudflare-r2/ci/scripts/build-podman-compose-image.sh
+#   args: ["build", "-f", "ghost-cloudflare-r2/ci/images/podman-compose/Dockerfile", "-t", "podman-compose", "ghost-cloudflare-r2/ci/images/podman-compose"]
+    # path: ls
+#   args: ["-al"]
   # dir: ghost-cloudflare-r2
   # path: id
   # args: ["run", "--rm", "alpine", "echo", "hello"]
