@@ -3,7 +3,7 @@ version: '3.9'
 services:
   # minio server service
   minio-server:
-    image: docker.io/minio/minio
+    image: docker.io/minio/minio:RELEASE.2024-12-18T13-15-44Z
     ports:
       - "9000:9000" # API
       - "9001:9001" # Console
@@ -13,7 +13,7 @@ services:
     command: server /data --console-address ":9001"
 
   createbuckets:
-    image: docker.io/minio/mc
+    image: docker.io/minio/minio:RELEASE.2024-12-18T13-15-44Z
     depends_on:
       - minio-server
     entrypoint: >

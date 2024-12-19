@@ -1,0 +1,16 @@
+---
+platform: linux
+
+image_resource:
+  type: registry-image
+  source:
+    repository: node
+    tag: 20
+
+inputs:
+- name: ghost-cloudflare-r2
+
+run:
+  path: npm
+  args: ["install"]
+  dir: ghost-cloudflare-r2

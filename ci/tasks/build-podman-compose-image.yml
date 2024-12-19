@@ -1,0 +1,28 @@
+---
+platform: linux
+
+image_resource:
+    type: registry-image
+    source:
+        repository: docker.io/concourse/oci-build-task
+
+inputs:
+- name: ghost-cloudflare-r2
+# - name: podman-base-image
+
+outputs:
+- name: podman-compose-image
+
+params:
+    CONTEXT: ghost-cloudflare-r2/ci/images/podman-compose
+    DOCKERFILE: ghost-cloudflare-r2/ci/images/podman-compose/Dockerfile
+    UNPACK_ROOTFS: true #add this param
+
+run:
+#   path: build
+  path: ls
+  args: ["-al"]
+  # dir: ghost-cloudflare-r2
+  # path: id
+  # args: ["run", "--rm", "alpine", "echo", "hello"]
+  # args: ["ps"]

@@ -1,0 +1,23 @@
+---
+platform: linux
+
+image_resource:
+  type: registry-image
+  source:
+    repository: quay.io/podman/stable
+    tag: latest
+
+inputs:
+- name: ghost-cloudflare-r2
+- name: minio-image
+- name: ghost-image
+- name: hurl-image
+
+run:
+  path: ghost-cloudflare-r2/ci/scripts/run-integration-tests.sh
+  # path: ls
+  # args: ["-al", "minio-image"]
+  # dir: ghost-cloudflare-r2
+  # path: id
+  # args: ["run", "--rm", "alpine", "echo", "hello"]
+  # args: ["ps"]

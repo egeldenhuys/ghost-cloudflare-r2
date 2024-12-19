@@ -1,0 +1,78 @@
+---
+resources:
+- name: ghost-cloudflare-r2
+  type: git
+  icon: github
+  source:
+    uri: https://github.com/egeldenhuys/ghost-cloudflare-r2.git
+- name: minio-image
+  type: registry-image
+  icon: docker
+  source:
+    repository: docker.io/minio/minio
+    tag: RELEASE.2024-12-18T13-15-44Z
+- name: ghost-image
+  type: registry-image
+  icon: docker
+  source:
+    repository: docker.io/ghost
+    tag: 5.94
+- name: hurl-image
+  type: registry-image
+  icon: docker
+  source:
+    repository: ghcr.io/orange-opensource/hurl
+    tag: 5.0.1
+# - name: podman-base-image
+#   type: registry-image
+#   icon: docker
+#   source:
+#     repository: quay.io/podman/stable
+#     tag: latest
+
+# - name: node-image
+#   type: registry-image
+#   source:
+#     repository: node
+#     tag: 20
+
+jobs:
+- name: npm-install
+  public: false
+  plan:
+  # - get: node-image
+  - get: ghost-cloudflare-r2
+    trigger: true
+  - task: npm-install
+    file: ci/tasks/npm-install.yml
+
+- name: integration-tests-job
+  plan:
+  - get: ghost-cloudflare-r2
+  - get: minio-image
+    params: {format: oci}
+  - get: ghost-image
+    params: {format: oci}
+  - get: hurl-image
+    params: {format: oci}
+  # - get: podman-base-image
+  #   params: {format: oci}
+
+  - task: build-podman-compose-image
+    file: ci/tasks/build-podman-compose-image.yml
+  
+  - task: integration-tests-task
+    privileged: true
+    file: ci/tasks/integrations-tests.yml
+  # - task: unit-tests
+  #   image: node-image
+  #   config:
+  #     inputs:
+  #     - name: repo
+  #     - name: dependencies
+  #       path: repo/node_modules
+  #     platform: linux
+  #     run:
+  #       path: npm
+  #       args: ["run", "test"]
+  #       dir: repo
