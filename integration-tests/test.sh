@@ -22,6 +22,8 @@ function run_hurl() {
 
 ./hurl/media/generate.sh ./hurl/media
 
+ls -al ./hurl/media
+
 run_hurl ./hurl/fragments/0-init-blog.hurl
 run_hurl ./hurl/tests/upload-image.hurl
 run_hurl ./hurl/tests/upload-thumbnail.hurl

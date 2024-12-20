@@ -148,7 +148,7 @@ jobs:
   <<: *gh-status-handlers
   plan:
   - get: ghost-cloudflare-r2
-    trigger: true
+    # trigger: true
   - put: gh-status
     inputs: [ghost-cloudflare-r2]
     params: {state: pending}
@@ -160,6 +160,7 @@ jobs:
   #   params: {format: oci}
   - get: podman-compose-image
     passed: [build-podman-compose-image]
+    trigger: true
   - task: get-worker-arch # TODO: is there a better way?
     image: podman-compose-image
     config:
