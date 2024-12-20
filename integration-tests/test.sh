@@ -13,7 +13,7 @@ function ctrl_c() {
 function run_hurl() {
     local hurl_args=$1
     # --userns=keep-id
-    podman run --rm -v $PWD/hurl:/hurl:z,ro --workdir /hurl --net=host ghcr.io/orange-opensource/hurl:5.0.1 --file-root /hurl --variables-file /hurl/variables.env --jobs 1 --test ${hurl_args}
+    podman run --rm -v $PWD/hurl:/hurl:z,ro --workdir /hurl --net=host 192.168.88.20:5000/orange-opensource/hurl:5.0.1 --file-root /hurl --variables-file /hurl/variables.env --jobs 1 --test ${hurl_args}
 }
 
 # podman-compose down

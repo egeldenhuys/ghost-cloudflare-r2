@@ -1,19 +1,29 @@
 version: '3.9'
 
+# networks:
+#   test-net:
+#     external: true
+
 services:
   # minio server service
   minio-server:
-    image: docker.io/minio/minio:RELEASE.2024-12-18T13-15-44Z
-    ports:
-      - "9000:9000" # API
-      - "9001:9001" # Console
+    image: 192.168.88.20:5000/minio/minio:RELEASE.2024-12-18T13-15-44Z
+    network_mode: host
+    # ports:
+    #   - "9000:9000" # API
+    #   - "9001:9001" # Console
+    # networks:
+    #   - test-net
     environment:
       MINIO_ACCESS_KEY: TEST_MINIO_ACCESS_KEY
       MINIO_SECRET_KEY: TEST_MINIO_SECRET_KEY
     command: server /data --console-address ":9001"
 
   createbuckets:
-    image: docker.io/minio/minio:RELEASE.2024-12-18T13-15-44Z
+    image: 192.168.88.20:5000/minio/minio:RELEASE.2024-12-18T13-15-44Z
+    network_mode: host
+    # networks:
+    #   - test-net
     depends_on:
       - minio-server
     entrypoint: >
@@ -25,10 +35,13 @@ services:
       "
 
   ghost:
-    image: docker.io/ghost:5.94
+    image: 192.168.88.20:5000/ghost:5.94
     restart: always
-    ports:
-      - 8080:2368
+    network_mode: host
+    # networks:
+    #   - test-net
+    # ports:
+    #   - 8080:2368
     environment:
       # see https://ghost.org/docs/config/#configuration-options
       database__client: sqlite3
