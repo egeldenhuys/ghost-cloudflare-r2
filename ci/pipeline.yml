@@ -80,10 +80,14 @@ resources:
 #     tag: 20
 
 jobs:
-- name: build-and-run-unit-tests
+- name: npm-install-and-test
   <<: *gh-status-handlers
   plan:
     - get: ghost-cloudflare-r2
+      trigger: true
+    - put: gh-status
+      inputs: [ghost-cloudflare-r2]
+      params: {state: pending}
     - task: npm-install
       config:
         inputs:
@@ -105,8 +109,13 @@ jobs:
 
 
 - name: build-podman-compose-image
+  <<: *gh-status-handlers
   plan:
     - get: ghost-cloudflare-r2
+      trigger: true
+    - put: gh-status
+      inputs: [ghost-cloudflare-r2]
+      params: {state: pending}
     - get: podman-base-image
       params: {format: oci}
 
@@ -131,8 +140,13 @@ jobs:
 #     file: ghost-cloudflare-r2/ci/tasks/npm-install.yml
 
 - name: integration-tests
+  <<: *gh-status-handlers
   plan:
   - get: ghost-cloudflare-r2
+    trigger: true
+  - put: gh-status
+    inputs: [ghost-cloudflare-r2]
+    params: {state: pending}
   - get: minio-image
     params: {format: oci}
   - get: ghost-image
