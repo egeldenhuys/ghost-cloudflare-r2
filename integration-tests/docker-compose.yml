@@ -7,7 +7,7 @@ version: '3.9'
 services:
   # minio server service
   minio-server:
-    image: 192.168.88.20:5000/minio/minio:RELEASE.2024-12-18T13-15-44Z
+    image: 192.168.88.20:5001/minio/minio:RELEASE.2024-12-18T13-15-44Z
     network_mode: host
     # ports:
     #   - "9000:9000" # API
@@ -20,7 +20,7 @@ services:
     command: server /data --console-address ":9001"
 
   createbuckets:
-    image: 192.168.88.20:5000/minio/minio:RELEASE.2024-12-18T13-15-44Z
+    image: 192.168.88.20:5001/minio/minio:RELEASE.2024-12-18T13-15-44Z
     network_mode: host
     # networks:
     #   - test-net
@@ -35,7 +35,7 @@ services:
       "
 
   ghost:
-    image: 192.168.88.20:5000/ghost:5.94
+    image: 192.168.88.20:5001/ghost:5.94
     restart: always
     network_mode: host
     # networks:
