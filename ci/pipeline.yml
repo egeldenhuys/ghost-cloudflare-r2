@@ -41,35 +41,41 @@ resources:
   source:
     uri: https://github.com/egeldenhuys/ghost-cloudflare-r2.git
     branch: concourse-ci
-- name: minio-image
-  type: registry-image
-  icon: docker
-  source:
-    repository: 192.168.88.20:5001/minio/minio
-    tag: RELEASE.2024-12-18T13-15-44Z
-- name: ghost-image
-  type: registry-image
-  icon: docker
-  source:
-    repository: 192.168.88.20:5001/library/ghost
-    tag: 5.94
-- name: hurl-image
-  type: registry-image
-  icon: docker
-  source:
-    repository: 192.168.88.20:5002/orange-opensource/hurl
-    tag: 5.0.1
-- name: podman-base-image
-  type: registry-image
-  icon: docker
-  source:
-    repository: 192.168.88.20:5003/podman/stable
-    tag: latest
+# - name: minio-image
+#   type: registry-image
+#   icon: docker
+#   source:
+#     repository: 192.168.88.20:5001/minio/minio
+#     tag: RELEASE.2024-12-18T13-15-44Z
+# - name: ghost-image
+#   type: registry-image
+#   icon: docker
+#   source:
+#     repository: 192.168.88.20:5001/library/ghost
+#     tag: 5.94
+# - name: hurl-image
+#   type: registry-image
+#   icon: docker
+#   source:
+#     repository: 192.168.88.20:5002/orange-opensource/hurl
+#     tag: 5.0.1
+# - name: podman-base-image
+#   type: registry-image
+#   icon: docker
+#   source:
+#     repository: 192.168.88.20:5003/podman/stable
+#     tag: latest
 - name: podman-compose-image
   type: registry-image
   source:
     repository: 192.168.88.20:5000/podman-compose
     tag: latest
+
+- name: hurl-gh-release
+  type: github-release
+  source:
+    owner: Orange-OpenSource
+    repository: hurl
 
 # localhost:5000/oci-build-task:master-arm64
 
@@ -104,9 +110,8 @@ jobs:
           args:
             - -cx
             - |
-              npm install
+              npm install --include-dev
               npm run test
-
 
 - name: build-podman-compose-image
   <<: *gh-status-handlers
@@ -116,8 +121,8 @@ jobs:
     - put: gh-status
       inputs: [ghost-cloudflare-r2]
       params: {state: pending}
-    - get: podman-base-image
-      params: {format: oci}
+    # - get: podman-base-image
+    #   params: {format: oci}
 
     - task: build-image
       privileged: true
@@ -147,27 +152,53 @@ jobs:
   - put: gh-status
     inputs: [ghost-cloudflare-r2]
     params: {state: pending}
-  - get: minio-image
-    params: {format: oci}
-  - get: ghost-image
-    params: {format: oci}
-  - get: hurl-image
-    params: {format: oci}
+  # - get: minio-image
+  #   params: {format: oci}
+  # - get: ghost-image
+  #   params: {format: oci}
+  # - get: hurl-image
+  #   params: {format: oci}
   - get: podman-compose-image
-
-  - task: integration-tests-task
-    privileged: true
+    passed: [build-podman-compose-image]
+  - task: get-worker-arch # TODO: is there a better way?
     image: podman-compose-image
     config:
       platform: linux
-      inputs:
-      - name: ghost-cloudflare-r2
-      - name: minio-image
-      - name: ghost-image
-      - name: hurl-image
-      - name: podman-compose-image
+      outputs:
+        - name: arch
       run:
-        path: ghost-cloudflare-r2/ci/scripts/run-integration-tests.sh
+        path: sh
+        args:
+          - -cx
+          - |
+            uname -m > arch/arch
+
+  - load_var: arch
+    file: arch/arch
+
+  - get: hurl-gh-release
+    params:
+      version: { tag: 'v6.0.0' } # TODO: make var?
+      globs: ["hurl-*-*-unknown-linux-gnu.tar.gz"]
+
+  # - task: extract-hurl # TODO: is there a better way?
+  #   image: podman-compose-image
+  #   config:
+  #     platform: linux
+  #     inputs:
+  #       - name: hurl-gh-release
+  #     outputs:
+  #       - name: hurl-gh-release-extracted
+  #     run:
+  #       path: sh
+  #       args:
+  #         - -cx
+  #         - |
+  #           tar -xvzf hurl-gh-release/hurl-*-((.:arch))-unknown-linux-gnu.tar.gz -C hurl-gh-release-extracted
+
+  - task: integration-tests-task
+    privileged: true
+    file: tasks/integration-tests.yml
 
   # - task: unit-tests
   #   image: node-image

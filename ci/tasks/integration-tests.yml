@@ -1,26 +1,21 @@
 ---
 platform: linux
-
-# image: podman-compose-image
-
-image_resource:
-  type: registry-image
-  source:
-    repository: 192.168.88.20:5000/podman-compose
-    tag: latest
-
 inputs:
 - name: ghost-cloudflare-r2
-- name: minio-image
-- name: ghost-image
-- name: hurl-image
-- name: podman-compose-image
+- name: hurl-gh-release
+- name: arch
 
+# - name: minio-image
+# - name: ghost-image
+# - name: hurl-image
+# - name: podman-compose-image
 run:
-  path: ghost-cloudflare-r2/ci/scripts/run-integration-tests.sh
-  # path: ls
-  # args: ["-al", "minio-image"]
-  # dir: ghost-cloudflare-r2
-  # path: id
-  # args: ["run", "--rm", "alpine", "echo", "hello"]
-  # args: ["ps"]
+  path: sh
+  args:
+    - -cx
+    - |
+      ls -al hurl-gh-release
+      mkdir -p ~/.local/bin
+      tar -xvzf hurl-gh-release/hurl-*-$(cat arch/arch)-unknown-linux-gnu.tar.gz -C ~/.local/bin --strip-components=2 hurl-6.0.0-$(cat arch/arch)-unknown-linux-gnu/bin/hurl
+      ls -al ~/.local/bin
+      ./ghost-cloudflare-r2/ci/scripts/run-integration-tests.sh
