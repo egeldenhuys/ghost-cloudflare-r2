@@ -9,7 +9,7 @@ image_resource:
 
 inputs:
 - name: ghost-cloudflare-r2
-- name: podman-base-image
+# - name: podman-base-image
 
 outputs:
 - name: image
