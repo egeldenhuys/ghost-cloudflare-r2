@@ -197,8 +197,9 @@ jobs:
   #           tar -xvzf hurl-gh-release/hurl-*-((.:arch))-unknown-linux-gnu.tar.gz -C hurl-gh-release-extracted
 
   - task: integration-tests-task
+    image: podman-compose-image
     privileged: true
-    file: tasks/integration-tests.yml
+    file: ghost-cloudflare-r2/ci/tasks/integration-tests.yml
 
   # - task: unit-tests
   #   image: node-image

@@ -20,7 +20,7 @@ function run_hurl() {
 # podman-compose down
 # podman-compose up -d
 
-./hurl/media/generate.sh
+./hurl/media/generate.sh ./hurl/media
 
 run_hurl ./hurl/fragments/0-init-blog.hurl
 run_hurl ./hurl/tests/upload-image.hurl
