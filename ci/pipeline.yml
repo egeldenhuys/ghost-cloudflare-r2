@@ -2,9 +2,10 @@
 resource_types:
 - name: cogito
   type: registry-image
-  check_every: 24h
   source:
-    repository: pix4d/cogito
+    repository: 192.168.88.20:5000/cogito
+    tag: 2024-12-20-arm64
+    insecure: true
 
 resources:
 - name: gh-status
@@ -96,7 +97,7 @@ jobs:
   - get: ghost-cloudflare-r2
     trigger: true
   - put: gh-status
-    inputs: [the-repo]
+    inputs: [ghost-cloudflare-r2]
     params: {state: pending}
   - task: npm-install
     file: ghost-cloudflare-r2/ci/tasks/npm-install.yml
