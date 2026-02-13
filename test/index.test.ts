@@ -969,6 +969,58 @@ describe('post: save(): imageOptimization__resize: true', () => {
     }
   });
 
+  test('save() single: RESPONSIVE_IMAGES: true with targetDir', async () => {
+    process.env.GHOST_STORAGE_ADAPTER_R2_RESPONSIVE_IMAGES = 'true';
+
+    const adapter = new CloudflareR2Adapter({
+      GHOST_STORAGE_ADAPTER_R2_CONTENT_PREFIX: contentPrefix,
+    });
+
+    const fileName = makeid(32);
+    const filePath = `/tmp/${fileName}`;
+    await generateImage(100, 100, filePath);
+    await generateImage(100, 100, filePath + '_processed');
+
+    const resizeWidths = (<string>(
+      process.env.GHOST_STORAGE_ADAPTER_R2_RESIZE_WIDTHS
+    ))
+      .split(',')
+      .map(w => parseInt(w));
+
+    await expect(
+      adapter.save(
+        {
+          fieldname: 'file',
+          originalname: 'snake.jpg',
+          encoding: '7bit',
+          mimetype: 'image/jpeg',
+          destination: '/tmp',
+          filename: fileName,
+          path: `${filePath}_processed`,
+          size: -1,
+          name: 'snake.jpg',
+          type: 'image/jpeg',
+          ext: '.jpg',
+        },
+        '/var/lib/ghost/content/images/2022/12'
+      )
+    ).resolves.toBe(
+      `https://cdn.example.com${contentPrefix}/content/images/${yearMonth}/snake.jpg`
+    );
+
+    await expect(
+      adapter.exists(`${contentPrefix}/content/images/${yearMonth}/snake.jpg`)
+    ).resolves.toBe(true);
+
+    for (const w of resizeWidths) {
+      await expect(
+        adapter.exists(
+          contentPrefix + `/content/images/size/w${w}/${yearMonth}/snake.jpg`
+        )
+      ).resolves.toBe(true);
+    }
+  });
+
   test('save() single: RESPONSIVE_IMAGES: true, SAVE_ORIGINAL: false', async () => {
     process.env.GHOST_STORAGE_ADAPTER_R2_RESPONSIVE_IMAGES = 'true';
     process.env.GHOST_STORAGE_ADAPTER_R2_SAVE_ORIGINAL = 'false';

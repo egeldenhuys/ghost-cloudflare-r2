@@ -44,6 +44,13 @@ function stripEndingSlash(s: string): string {
   return s.indexOf('/') === s.length - 1 ? s.substring(0, s.length - 1) : s;
 }
 
+function getHostFromUrl(url: string): string {
+  return url
+    .replace(/(^\w+:|^)\/\//, '')
+    .split('/')[0]
+    .split(':')[0];
+}
+
 function readFileAsync(filePath: string): Promise<Buffer> {
   return new Promise((resolve, reject) =>
     readFile(filePath, (err, data) => (err ? reject(err) : resolve(data)))
@@ -324,6 +331,7 @@ export default class CloudflareR2Adapter extends StorageBase {
     this.S3 = new S3Client({
       region: 'auto',
       endpoint: <string>config.GHOST_STORAGE_ADAPTER_R2_ENDPOINT,
+      forcePathStyle: true,
       credentials: {
         accessKeyId: <string>config.GHOST_STORAGE_ADAPTER_R2_ACCESS_KEY_ID,
         secretAccessKey: <string>(
@@ -546,10 +554,9 @@ export default class CloudflareR2Adapter extends StorageBase {
       targetDir
     );
 
-    let isImport = false;
-    if (targetDir) {
+    const isImport = !!fileInfo.newPath;
+    if (isImport) {
       log.info('Cloudflare R2 Storage Adapter: save(): Detected import.');
-      isImport = true;
       fileInfo.name = path.basename(fileInfo.name);
       fileInfo.ext = path.extname(fileInfo.name);
     }
@@ -661,7 +668,16 @@ export default class CloudflareR2Adapter extends StorageBase {
 
   serve(): Handler {
     return (req, res, next) => {
-      next();
+      const domainHost = getHostFromUrl(this.domain).toLowerCase();
+      const requestHost = (req.hostname || '').toLowerCase();
+
+      if (domainHost === '' || domainHost === requestHost) {
+        next();
+        return;
+      }
+
+      const target = `${stripEndingSlash(this.domain)}${req.originalUrl}`;
+      res.redirect(302, target);
     };
   }
 }
